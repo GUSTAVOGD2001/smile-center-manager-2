@@ -134,6 +134,46 @@ const HomeSecretaria = () => {
     }
   };
 
+  const handleUpdateStatus = async (order: OrderRow, newStatus: string) => {
+    setIsLoading(true);
+    try {
+      const UPDATE_URL = `${API_URL}?token=${API_TOKEN}`;
+      const response = await fetch(UPDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order['ID Orden'],
+          estado: newStatus,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Estado actualizado correctamente');
+        
+        // Log the change
+        console.log({
+          user: currentUser?.username,
+          orderId: order['ID Orden'],
+          field: 'Estado',
+          oldValue: order.Estado,
+          newValue: newStatus,
+          timestamp: new Date().toISOString()
+        });
+        
+        await fetchOrders();
+        handleSearch();
+      } else {
+        toast.error('Error al actualizar el estado');
+      }
+    } catch (error) {
+      toast.error('Error al actualizar el estado');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const showDetails = (order: OrderRow) => {
     setSelectedOrder(order);
     setIsDetailsOpen(true);
@@ -197,7 +237,8 @@ const HomeSecretaria = () => {
                     <tr className="border-b border-[rgba(255,255,255,0.1)]">
                       <th className="text-left p-3 font-semibold">ID Orden</th>
                       <th className="text-left p-3 font-semibold">Timestamp</th>
-                      <th className="text-left p-3 font-semibold">Estado</th>
+                      <th className="text-left p-3 font-semibold">Estado Actual</th>
+                      <th className="text-left p-3 font-semibold">Nuevo Estado</th>
                       <th className="text-left p-3 font-semibold">Diseñadores</th>
                       <th className="text-left p-3 font-semibold">Repartidores</th>
                       <th className="text-left p-3 font-semibold">Acciones</th>
@@ -212,6 +253,25 @@ const HomeSecretaria = () => {
                           <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
                             {order.Estado}
                           </span>
+                        </td>
+                        <td className="p-3">
+                          <Select
+                            defaultValue={order.Estado}
+                            onValueChange={(value) => handleUpdateStatus(order, value)}
+                            disabled={isLoading}
+                          >
+                            <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Ingresado">Ingresado</SelectItem>
+                              <SelectItem value="En Proceso">En Proceso</SelectItem>
+                              <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
+                              <SelectItem value="Entregado">Entregado</SelectItem>
+                              <SelectItem value="Entregado-Pendiente de pago">Entregado-Pendiente de pago</SelectItem>
+                              <SelectItem value="Cancelado">Cancelado</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </td>
                         <td className="p-3">
                           <Select
