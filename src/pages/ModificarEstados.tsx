@@ -34,7 +34,10 @@ const ModificarEstados = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
-  const [dateFrom, setDateFrom] = useState<Date>();
+  const [dateFrom, setDateFrom] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [dateTo, setDateTo] = useState<Date>();
   const [searchName, setSearchName] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
