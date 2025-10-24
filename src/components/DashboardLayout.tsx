@@ -1,4 +1,4 @@
-import { Home, Tag, LogOut, Settings, Search } from 'lucide-react';
+import { Home, Tag, LogOut, Settings, Search, Package } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const adminNavItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/modificar-estados', label: 'Modificar estados', icon: Tag },
+    { path: '/inventario', label: 'Inventario', icon: Package },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ];
 

@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Home from "./pages/Home";
 import ModificarEstados from "./pages/ModificarEstados";
 import Configuracion from "./pages/Configuracion";
+import Inventario from "./pages/Inventario";
 import HomeUsuario from "./pages/HomeUsuario";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,16 @@ const App = () => (
                     <DashboardLayout>
                       <Configuracion />
                     </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/inventario"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <Inventario />
                   </AdminRoute>
                 </AuthGuard>
               }
