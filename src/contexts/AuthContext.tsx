@@ -1,24 +1,56 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+export interface User {
+  username: string;
+  password: string;
+  role: 'admin' | 'user';
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  currentUser: User | null;
+  users: User[];
   login: (username: string, password: string) => boolean;
   logout: () => void;
+  addUser: (user: User) => void;
+  updateUser: (username: string, updatedUser: User) => void;
+  deleteUser: (username: string) => void;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const DEFAULT_USERS: User[] = [
+  { username: 'SMILEADMIN', password: 'Karla12345', role: 'admin' },
+  { username: 'Usuario1', password: '1234', role: 'user' },
+];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('smileAuthToken') === 'authenticated';
   });
+  
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('smileCurrentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [users, setUsers] = useState<User[]>(() => {
+    const savedUsers = localStorage.getItem('smileUsers');
+    return savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('smileUsers', JSON.stringify(users));
+  }, [users]);
 
   const login = (username: string, password: string): boolean => {
-    if ((username === 'SMILEADMIN' && password === 'Karla12345') ||
-        (username === 'Usuario1' && password === '1234')) {
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
       setIsAuthenticated(true);
+      setCurrentUser(user);
       localStorage.setItem('smileAuthToken', 'authenticated');
+      localStorage.setItem('smileCurrentUser', JSON.stringify(user));
       return true;
     }
     return false;
@@ -26,11 +58,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setIsAuthenticated(false);
+    setCurrentUser(null);
     localStorage.removeItem('smileAuthToken');
+    localStorage.removeItem('smileCurrentUser');
   };
 
+  const addUser = (user: User) => {
+    setUsers(prev => [...prev, user]);
+  };
+
+  const updateUser = (username: string, updatedUser: User) => {
+    setUsers(prev => prev.map(u => u.username === username ? updatedUser : u));
+  };
+
+  const deleteUser = (username: string) => {
+    setUsers(prev => prev.filter(u => u.username !== username));
+  };
+
+  const isAdmin = () => currentUser?.role === 'admin';
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      currentUser,
+      users,
+      login, 
+      logout,
+      addUser,
+      updateUser,
+      deleteUser,
+      isAdmin
+    }}>
       {children}
     </AuthContext.Provider>
   );

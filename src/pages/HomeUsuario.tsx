@@ -1,0 +1,257 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { Search, Eye } from 'lucide-react';
+
+interface OrderRow {
+  'ID Orden': string;
+  Timestamp: string;
+  Estado: string;
+  Nombre?: string;
+  Apellido?: string;
+  'Fecha Requerida'?: string;
+  'Tipo de trabajo'?: string;
+  Material?: string;
+  'Especificación'?: string;
+  [key: string]: string | undefined;
+}
+
+const HomeUsuario = () => {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const GET_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
+      const response = await fetch(GET_URL);
+      const data = await response.json();
+      setOrders(data.rows || []);
+    } catch (error) {
+      toast.error('Error al cargar las órdenes');
+      console.error(error);
+    }
+  };
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      toast.error('Ingrese un ID de orden para buscar');
+      return;
+    }
+    const results = orders.filter(order => 
+      order['ID Orden']?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setSearchResults(results);
+    if (results.length === 0) {
+      toast.info('No se encontraron órdenes');
+    }
+  };
+
+  const handleUpdateStatus = async (order: OrderRow, newStatus: string) => {
+    setIsLoading(true);
+    try {
+      const UPDATE_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
+      const response = await fetch(UPDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order['ID Orden'],
+          estado: newStatus,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Estado actualizado correctamente');
+        await fetchOrders();
+        handleSearch();
+      } else {
+        toast.error('Error al actualizar el estado');
+      }
+    } catch (error) {
+      toast.error('Error al actualizar el estado');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const showDetails = (order: OrderRow) => {
+    setSelectedOrder(order);
+    setIsDetailsOpen(true);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
+        <p className="text-muted-foreground">Busque una orden por ID para ver y modificar su estado</p>
+      </div>
+
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Buscar Orden</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Ingrese el ID de la orden"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+              />
+            </div>
+            <Button onClick={handleSearch} className="gap-2">
+              <Search size={18} />
+              Buscar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {searchResults.length > 0 && (
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Resultados de Búsqueda</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                    <th className="text-left p-3 font-semibold">ID Orden</th>
+                    <th className="text-left p-3 font-semibold">Timestamp</th>
+                    <th className="text-left p-3 font-semibold">Estado Actual</th>
+                    <th className="text-left p-3 font-semibold">Nuevo Estado</th>
+                    <th className="text-left p-3 font-semibold">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map((order, idx) => (
+                    <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                      <td className="p-3">{order['ID Orden']}</td>
+                      <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
+                      <td className="p-3">
+                        <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                          {order.Estado}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <Select
+                          defaultValue={order.Estado}
+                          onValueChange={(value) => handleUpdateStatus(order, value)}
+                          disabled={isLoading}
+                        >
+                          <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ingresado">Ingresado</SelectItem>
+                            <SelectItem value="En Proceso">En Proceso</SelectItem>
+                            <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
+                            <SelectItem value="Entregado">Entregado</SelectItem>
+                            <SelectItem value="Entregado-Pendiente de pago">Entregado-Pendiente de pago</SelectItem>
+                            <SelectItem value="Cancelado">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => showDetails(order)}
+                          className="gap-2"
+                        >
+                          <Eye size={16} />
+                          Ver Detalles
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="glass-card max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles de la Orden</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>ID Orden</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['ID Orden']}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Estado}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Nombre</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Nombre || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Apellido</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Apellido || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fecha Requerida</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Fecha Requerida'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de trabajo</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Tipo de trabajo'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Material</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Material || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Especificación</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Especificación'] || 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default HomeUsuario;

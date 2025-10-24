@@ -2,14 +2,27 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthGuard from "@/components/AuthGuard";
 import DashboardLayout from "@/components/DashboardLayout";
 import Home from "./pages/Home";
 import ModificarEstados from "./pages/ModificarEstados";
+import Configuracion from "./pages/Configuracion";
+import HomeUsuario from "./pages/HomeUsuario";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { useAuth } from "@/contexts/AuthContext";
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin } = useAuth();
+  return isAdmin() ? <>{children}</> : <Navigate to="/home-usuario" replace />;
+};
+
+const UserRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin } = useAuth();
+  return !isAdmin() ? <>{children}</> : <Navigate to="/" replace />;
+};
 
 const queryClient = new QueryClient();
 
@@ -26,9 +39,11 @@ const App = () => (
               path="/"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <Home />
-                  </DashboardLayout>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Home />
+                    </DashboardLayout>
+                  </AdminRoute>
                 </AuthGuard>
               }
             />
@@ -36,9 +51,35 @@ const App = () => (
               path="/modificar-estados"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <ModificarEstados />
-                  </DashboardLayout>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <ModificarEstados />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/configuracion"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Configuracion />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/home-usuario"
+              element={
+                <AuthGuard>
+                  <UserRoute>
+                    <DashboardLayout>
+                      <HomeUsuario />
+                    </DashboardLayout>
+                  </UserRoute>
                 </AuthGuard>
               }
             />

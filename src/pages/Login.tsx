@@ -11,14 +11,15 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      const redirectPath = isAdmin() ? '/' : '/home-usuario';
+      navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, isAdmin]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +29,8 @@ const Login = () => {
       const success = login(username, password);
       if (success) {
         toast.success('Bienvenido al Dashboard');
-        navigate('/', { replace: true });
+        const redirectPath = isAdmin() ? '/' : '/home-usuario';
+        navigate(redirectPath, { replace: true });
       } else {
         toast.error('Credenciales incorrectas');
       }
