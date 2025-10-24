@@ -79,28 +79,84 @@ const ModificarEstados = () => {
     }
   };
 
+  const testConnection = async () => {
+    console.log('🔍 TEST: Iniciando prueba de conexión...');
+    const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
+    
+    const testData = {
+      token: 'Tamarindo123456',
+      action: 'update',
+      keyColumn: 'ID Orden',
+      keyValue: 'ORD-0001',
+      newStatus: 'Recepcion',
+    };
+
+    console.log('🔍 TEST URL:', POST_URL);
+    console.log('🔍 TEST Data:', testData);
+
+    try {
+      console.log('🔍 TEST: Enviando request...');
+      const response = await fetch(POST_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Intentar sin CORS para prueba
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testData),
+      });
+
+      console.log('✅ TEST: Response recibido');
+      console.log('✅ TEST Response status:', response.status);
+      console.log('✅ TEST Response type:', response.type);
+      
+      if (response.type === 'opaque') {
+        toast.warning('Request enviado pero sin respuesta visible (CORS). Verifica Google Script.');
+        console.log('⚠️ TEST: Respuesta opaca - El servidor no permite leer la respuesta (CORS)');
+      } else {
+        const result = await response.json();
+        console.log('✅ TEST Result:', result);
+        toast.success('Test completado - Ver consola');
+      }
+    } catch (error) {
+      console.error('❌ TEST Error:', error);
+      toast.error(`Error de conexión: ${error}`);
+    }
+  };
+
   const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
     const orderId = order['ID Orden'];
     setUpdatingIds(prev => new Set(prev).add(orderId));
 
+    console.log('📝 UPDATE: Iniciando actualización...');
+    console.log('📝 UPDATE Order ID:', orderId);
+    console.log('📝 UPDATE Nuevo Estado:', nuevoEstado);
+
     try {
       const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
       
+      const requestBody = {
+        token: 'Tamarindo123456',
+        action: 'update',
+        keyColumn: 'ID Orden',
+        keyValue: orderId,
+        newStatus: nuevoEstado,
+      };
+
+      console.log('📝 UPDATE Request body:', requestBody);
+
       const response = await fetch(POST_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          token: 'Tamarindo123456',
-          action: 'update',
-          keyColumn: 'ID Orden',
-          keyValue: orderId,
-          newStatus: nuevoEstado,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('📝 UPDATE Response status:', response.status);
+      console.log('📝 UPDATE Response ok:', response.ok);
+
       const result = await response.json();
+      console.log('📝 UPDATE Result:', result);
 
       if (result.ok) {
         toast.success('Estado actualizado correctamente');
@@ -111,11 +167,17 @@ const ModificarEstados = () => {
           )
         );
       } else {
-        toast.error('Error al actualizar el estado');
+        console.error('📝 UPDATE Error en resultado:', result);
+        toast.error(`Error: ${result.message || 'Error al actualizar el estado'}`);
       }
     } catch (error) {
-      toast.error('Error de conexión al actualizar el estado');
-      console.error(error);
+      console.error('❌ UPDATE Error crítico:', error);
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast.error('Error CORS: El Google Script debe permitir requests desde este origen');
+        console.error('❌ CORS Error: Asegúrate de que el Google Apps Script esté desplegado como "Anyone" y acepte requests POST');
+      } else {
+        toast.error('Error de conexión al actualizar el estado');
+      }
     } finally {
       setUpdatingIds(prev => {
         const newSet = new Set(prev);
@@ -144,8 +206,15 @@ const ModificarEstados = () => {
       </div>
 
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Gestión de Estados de Órdenes</CardTitle>
+          <Button 
+            onClick={testConnection}
+            variant="outline"
+            className="ml-auto"
+          >
+            🔧 Test POST Connection
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-6 flex-wrap">
