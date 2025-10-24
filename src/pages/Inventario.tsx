@@ -92,9 +92,7 @@ const Inventario = () => {
 
   const totalNuevos = data.filter(item => item.Disco && item.Disco.trim() !== '' && item.Estado === 'Nuevo').length;
   const totalEntregados = data.filter(item => item.Disco && item.Disco.trim() !== '' && item.Estado === 'Entregado').length;
-  const totalNuevosSum = data.filter(item => item.Estado === 'Nuevo').reduce((sum, item) => sum + (item.Total || 0), 0);
-  const totalEntregadosSum = data.filter(item => item.Estado === 'Entregado').reduce((sum, item) => sum + (item.Total || 0), 0);
-  const totalDiscos = totalNuevosSum + totalEntregadosSum - 2;
+  const totalDiscos = totalNuevos + totalEntregados;
   const totalRotas = data.reduce((sum, item) => {
     const rotas = typeof item['Unidades Rotas'] === 'string' 
       ? parseInt(item['Unidades Rotas']) || 0 
