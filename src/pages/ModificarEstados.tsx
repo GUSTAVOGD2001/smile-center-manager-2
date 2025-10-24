@@ -81,42 +81,39 @@ const ModificarEstados = () => {
 
   const testConnection = async () => {
     console.log('🔍 TEST: Iniciando prueba de conexión...');
-    const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
+    const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
     
     const testData = {
       token: 'Tamarindo123456',
       action: 'update',
       keyColumn: 'ID Orden',
       keyValue: 'ORD-0001',
-      newStatus: 'Recepcion',
+      newStatus: 'Listo para recoger',
+      debug: true
     };
 
+    const bodyText = JSON.stringify(testData);
+
     console.log('🔍 TEST URL:', POST_URL);
-    console.log('🔍 TEST Data:', testData);
+    console.log('🔍 TEST Body (raw text):', bodyText);
 
     try {
       console.log('🔍 TEST: Enviando request...');
       const response = await fetch(POST_URL, {
         method: 'POST',
-        mode: 'no-cors', // Intentar sin CORS para prueba
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: JSON.stringify(testData),
+        body: bodyText,
       });
 
       console.log('✅ TEST: Response recibido');
       console.log('✅ TEST Response status:', response.status);
       console.log('✅ TEST Response type:', response.type);
       
-      if (response.type === 'opaque') {
-        toast.warning('Request enviado pero sin respuesta visible (CORS). Verifica Google Script.');
-        console.log('⚠️ TEST: Respuesta opaca - El servidor no permite leer la respuesta (CORS)');
-      } else {
-        const result = await response.json();
-        console.log('✅ TEST Result:', result);
-        toast.success('Test completado - Ver consola');
-      }
+      const result = await response.json();
+      console.log('✅ TEST Result:', result);
+      toast.success('Test completado - Ver consola');
     } catch (error) {
       console.error('❌ TEST Error:', error);
       toast.error(`Error de conexión: ${error}`);
