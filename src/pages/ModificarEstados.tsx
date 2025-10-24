@@ -30,6 +30,18 @@ const ESTADOS = [
   'Entregado-Pendiente de pago',
 ];
 
+const fmtFecha = (v?: string | number | Date) =>
+  v
+    ? new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(v))
+    : '';
+
 const ModificarEstados = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -296,10 +308,10 @@ const ModificarEstados = () => {
               <thead>
                 <tr className="border-b border-[rgba(255,255,255,0.1)]">
                   <th className="text-left p-3 font-semibold">ID Orden</th>
+                  <th className="text-left p-3 font-semibold">Fecha de Registro</th>
                   <th className="text-left p-3 font-semibold">Nombre</th>
                   <th className="text-left p-3 font-semibold">Costo</th>
                   <th className="text-left p-3 font-semibold">A Cuenta</th>
-                  <th className="text-left p-3 font-semibold">Timestamp</th>
                   <th className="text-left p-3 font-semibold">Estado</th>
                   <th className="text-left p-3 font-semibold">Acción</th>
                 </tr>
@@ -312,10 +324,10 @@ const ModificarEstados = () => {
                   return (
                     <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
                       <td className="p-3">{orderId}</td>
+                      <td className="p-3">{fmtFecha(order.Timestamp)}</td>
                       <td className="p-3">{order['Nombre']} {order['Apellido']}</td>
                       <td className="p-3">${order['Costo'] || '0'}</td>
                       <td className="p-3">${order['A Cuenta'] || '0'}</td>
-                      <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
                           {order.Estado}
