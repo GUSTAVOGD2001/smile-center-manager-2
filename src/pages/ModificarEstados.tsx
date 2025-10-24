@@ -129,7 +129,7 @@ const ModificarEstados = () => {
     console.log('📝 UPDATE Nuevo Estado:', nuevoEstado);
 
     try {
-      const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
+      const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
       
       const requestBody = {
         token: 'Tamarindo123456',
@@ -139,14 +139,17 @@ const ModificarEstados = () => {
         newStatus: nuevoEstado,
       };
 
+      const bodyText = JSON.stringify(requestBody);
+
       console.log('📝 UPDATE Request body:', requestBody);
+      console.log('📝 UPDATE Body (raw text):', bodyText);
 
       const response = await fetch(POST_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: JSON.stringify(requestBody),
+        body: bodyText,
       });
 
       console.log('📝 UPDATE Response status:', response.status);
