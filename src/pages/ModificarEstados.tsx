@@ -34,8 +34,7 @@ const ModificarEstados = () => {
 
   const fetchOrders = async () => {
     try {
-      // Replace with your actual GET URL
-      const GET_URL = 'https://script.google.com/macros/s/TU_ID/exec?token=TU_TOKEN';
+      const GET_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
       const response = await fetch(GET_URL);
       const data = await response.json();
       setOrders(data.rows || []);
