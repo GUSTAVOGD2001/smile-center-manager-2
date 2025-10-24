@@ -79,47 +79,6 @@ const ModificarEstados = () => {
     }
   };
 
-  const testConnection = async () => {
-    console.log('🔍 TEST: Iniciando prueba de conexión...');
-    const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
-    
-    const testData = {
-      token: 'Tamarindo123456',
-      action: 'update',
-      keyColumn: 'ID Orden',
-      keyValue: 'ORD-0001',
-      newStatus: 'Listo para recoger',
-      debug: true
-    };
-
-    const bodyText = JSON.stringify(testData);
-
-    console.log('🔍 TEST URL:', POST_URL);
-    console.log('🔍 TEST Body (raw text):', bodyText);
-
-    try {
-      console.log('🔍 TEST: Enviando request...');
-      const response = await fetch(POST_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: bodyText,
-      });
-
-      console.log('✅ TEST: Response recibido');
-      console.log('✅ TEST Response status:', response.status);
-      console.log('✅ TEST Response type:', response.type);
-      
-      const result = await response.json();
-      console.log('✅ TEST Result:', result);
-      toast.success('Test completado - Ver consola');
-    } catch (error) {
-      console.error('❌ TEST Error:', error);
-      toast.error(`Error de conexión: ${error}`);
-    }
-  };
-
   const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
     const orderId = order['ID Orden'];
     setUpdatingIds(prev => new Set(prev).add(orderId));
@@ -206,15 +165,8 @@ const ModificarEstados = () => {
       </div>
 
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Gestión de Estados de Órdenes</CardTitle>
-          <Button 
-            onClick={testConnection}
-            variant="outline"
-            className="ml-auto"
-          >
-            🔧 Test POST Connection
-          </Button>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-6 flex-wrap">
