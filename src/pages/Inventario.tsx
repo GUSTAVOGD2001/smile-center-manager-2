@@ -9,6 +9,7 @@ import { RefreshCw, Package, CheckCircle, Clock, AlertTriangle } from 'lucide-re
 import { toast } from '@/hooks/use-toast';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardLayout from '@/components/DashboardLayout';
+import { formatDateDMY, parseAnyDate } from '@/utils/date';
 
 interface InventoryItem {
   'Fecha de Registro': string;
@@ -71,9 +72,19 @@ const Inventario = () => {
       filtered = filtered.filter(item => item.Estado === estadoFilter);
     }
 
+    const dateFields: SortField[] = ['Fecha de Registro', 'Fecha Entrega', 'Fecha de Terminación'];
+
     filtered.sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
+
+      if (dateFields.includes(sortField)) {
+        const aTime = parseAnyDate(aVal)?.getTime() ?? 0;
+        const bTime = parseAnyDate(bVal)?.getTime() ?? 0;
+        const comparison = aTime > bTime ? 1 : aTime < bTime ? -1 : 0;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      }
+
       const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
       return sortDirection === 'asc' ? comparison : -comparison;
     });
@@ -249,14 +260,14 @@ const Inventario = () => {
                   <TableBody>
                     {filteredData.filter(item => item.Disco && item.Disco.trim() !== '').map((item, index) => (
                       <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
-                        <TableCell>{item['Fecha de Registro']}</TableCell>
+                        <TableCell>{formatDateDMY(item['Fecha de Registro'])}</TableCell>
                         <TableCell className="font-medium">{item.Disco}</TableCell>
                         <TableCell>{item.Unidades}</TableCell>
                         <TableCell>{item['Unidades Rotas']}</TableCell>
                         <TableCell className="font-semibold">{item.Total}</TableCell>
                         <TableCell>{getEstadoBadge(item.Estado)}</TableCell>
-                        <TableCell>{item['Fecha Entrega']}</TableCell>
-                        <TableCell>{item['Fecha de Terminación']}</TableCell>
+                        <TableCell>{formatDateDMY(item['Fecha Entrega'])}</TableCell>
+                        <TableCell>{formatDateDMY(item['Fecha de Terminación'])}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
