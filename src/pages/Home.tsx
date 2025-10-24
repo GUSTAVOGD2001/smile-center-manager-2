@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, CheckCircle, Truck, AlertCircle, Hash } from 'lucide-react';
+import { Package, CheckCircle, Truck, AlertCircle, Smile } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -57,7 +57,7 @@ const Home = () => {
 
   const kpiCards = [
     { title: 'Total Órdenes', value: totalOrders, icon: Package, color: 'text-blue-400' },
-    { title: 'Total Piezas Dentales', value: totalPiezasDentales, icon: Hash, color: 'text-purple-400' },
+    { title: 'Total Piezas Dentales', value: totalPiezasDentales, icon: Smile, color: 'text-purple-400' },
     { title: 'Listo para Recoger', value: readyForPickup, icon: CheckCircle, color: 'text-primary' },
     { title: 'Entregado', value: delivered, icon: Truck, color: 'text-green-400' },
     { title: 'Pendiente de Pago', value: pendingPayment, icon: AlertCircle, color: 'text-yellow-400' },
