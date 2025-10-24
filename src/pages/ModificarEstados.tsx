@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, DollarSign, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -178,12 +178,13 @@ const ModificarEstados = () => {
         <p className="text-muted-foreground">Actualiza el estado de las órdenes</p>
       </div>
 
+      {/* Filtros */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
-          <CardTitle>Gestión de Estados de Órdenes</CardTitle>
+          <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 mb-6">
+          <div className="space-y-4">
             <div className="flex-1">
               <Input
                 placeholder="Buscar por nombre..."
@@ -246,7 +247,8 @@ const ModificarEstados = () => {
               <Button
                 variant="secondary"
                 onClick={() => {
-                  setDateFrom(undefined);
+                  const now = new Date();
+                  setDateFrom(new Date(now.getFullYear(), now.getMonth(), 1));
                   setDateTo(undefined);
                   setSearchName('');
                 }}
@@ -255,6 +257,40 @@ const ModificarEstados = () => {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Tarjetas de suma */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Costos</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              ${filteredOrders.reduce((sum, order) => sum + (parseFloat(order['Costo'] || '0')), 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total A Cuenta</CardTitle>
+            <Wallet className="h-5 w-5 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              ${filteredOrders.reduce((sum, order) => sum + (parseFloat(order['A Cuenta'] || '0')), 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Gestión de Estados de Órdenes</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
