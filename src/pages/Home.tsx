@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, CheckCircle, Truck, AlertCircle } from 'lucide-react';
+import { Package, CheckCircle, Truck, AlertCircle, Hash } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -37,6 +37,12 @@ const Home = () => {
   const readyForPickup = orders.filter(o => o.Estado === 'Listo para recoger').length;
   const delivered = orders.filter(o => o.Estado === 'Entregado').length;
   const pendingPayment = orders.filter(o => o.Estado === 'Entregado-Pendiente de pago').length;
+  
+  // Calculate total Piezas Dentales
+  const totalPiezasDentales = orders.reduce((sum, order) => {
+    const piezas = parseInt(order['Piezas Dentales'] || '0', 10);
+    return sum + piezas;
+  }, 0);
 
   // Group orders by day
   const ordersByDay = orders.reduce((acc: { [key: string]: number }, order) => {
@@ -51,6 +57,7 @@ const Home = () => {
 
   const kpiCards = [
     { title: 'Total Órdenes', value: totalOrders, icon: Package, color: 'text-blue-400' },
+    { title: 'Total Piezas Dentales', value: totalPiezasDentales, icon: Hash, color: 'text-purple-400' },
     { title: 'Listo para Recoger', value: readyForPickup, icon: CheckCircle, color: 'text-primary' },
     { title: 'Entregado', value: delivered, icon: Truck, color: 'text-green-400' },
     { title: 'Pendiente de Pago', value: pendingPayment, icon: AlertCircle, color: 'text-yellow-400' },
@@ -75,7 +82,7 @@ const Home = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {kpiCards.map((kpi) => (
           <Card key={kpi.title} className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
