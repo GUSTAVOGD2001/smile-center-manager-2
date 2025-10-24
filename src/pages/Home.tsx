@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, CheckCircle, Truck, AlertCircle, Smile } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Package, CheckCircle, Truck, AlertCircle, Smile, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -76,9 +77,18 @@ const Home = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Vista general de órdenes</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Vista general de órdenes</p>
+        </div>
+        <Button
+          onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Añadir Orden
+        </Button>
       </div>
 
       {/* KPI Cards */}
