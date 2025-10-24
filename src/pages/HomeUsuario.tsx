@@ -38,7 +38,18 @@ const HomeUsuario = () => {
       const GET_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
       const response = await fetch(GET_URL);
       const data = await response.json();
-      setOrders(data.rows || []);
+      
+      // Filter to show only current month
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const filteredRows = (data.rows || []).filter((order: OrderRow) => {
+        const orderDate = new Date(order.Timestamp);
+        return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+      });
+      
+      setOrders(filteredRows);
     } catch (error) {
       toast.error('Error al cargar las órdenes');
       console.error(error);

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface OrderRow {
@@ -27,10 +33,37 @@ const ModificarEstados = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [dateFrom, setDateFrom] = useState<Date>();
+  const [dateTo, setDateTo] = useState<Date>();
+  const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    filterOrders();
+  }, [orders, dateFrom, dateTo]);
+
+  const filterOrders = () => {
+    let filtered = [...orders];
+
+    if (dateFrom) {
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.Timestamp);
+        return orderDate >= dateFrom;
+      });
+    }
+
+    if (dateTo) {
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.Timestamp);
+        return orderDate <= dateTo;
+      });
+    }
+
+    setFilteredOrders(filtered);
+  };
 
   const fetchOrders = async () => {
     try {
@@ -115,6 +148,67 @@ const ModificarEstados = () => {
           <CardTitle>Gestión de Estados de Órdenes</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex gap-4 mb-6 flex-wrap">
+            <div className="flex-1 min-w-[200px]">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "PPP") : <span>Fecha desde</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "PPP") : <span>Fecha hasta</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDateFrom(undefined);
+                setDateTo(undefined);
+              }}
+            >
+              Limpiar Filtros
+            </Button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -126,7 +220,7 @@ const ModificarEstados = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order, idx) => {
+                {filteredOrders.map((order, idx) => {
                   const orderId = order['ID Orden'];
                   const isUpdating = updatingIds.has(orderId);
 
