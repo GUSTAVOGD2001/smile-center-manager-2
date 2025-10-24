@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 interface OrderRow {
   'ID Orden': string;
   Timestamp: string;
-  U: string;
+  Estado: string;
   [key: string]: string;
 }
 
@@ -74,7 +74,7 @@ const ModificarEstados = () => {
         // Update local state
         setOrders(prevOrders =>
           prevOrders.map(o =>
-            o['ID Orden'] === orderId ? { ...o, U: nuevoEstado } : o
+            o['ID Orden'] === orderId ? { ...o, Estado: nuevoEstado } : o
           )
         );
       } else {
@@ -121,7 +121,7 @@ const ModificarEstados = () => {
                 <tr className="border-b border-[rgba(255,255,255,0.1)]">
                   <th className="text-left p-3 font-semibold">ID Orden</th>
                   <th className="text-left p-3 font-semibold">Timestamp</th>
-                  <th className="text-left p-3 font-semibold">Estado (Columna U)</th>
+                  <th className="text-left p-3 font-semibold">Estado</th>
                   <th className="text-left p-3 font-semibold">Acción</th>
                 </tr>
               </thead>
@@ -136,12 +136,12 @@ const ModificarEstados = () => {
                       <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                          {order.U}
+                          {order.Estado}
                         </span>
                       </td>
                       <td className="p-3">
                         <Select
-                          value={order.U}
+                          value={order.Estado}
                           onValueChange={(value) => updateEstado(order, value)}
                           disabled={isUpdating}
                         >

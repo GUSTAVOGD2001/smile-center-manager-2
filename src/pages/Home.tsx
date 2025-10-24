@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 interface OrderRow {
   'ID Orden': string;
   Timestamp: string;
-  U: string;
+  Estado: string;
   [key: string]: string;
 }
 
@@ -34,9 +34,9 @@ const Home = () => {
   };
 
   const totalOrders = orders.length;
-  const readyForPickup = orders.filter(o => o.U === 'Listo para recoger').length;
-  const delivered = orders.filter(o => o.U === 'Entregado').length;
-  const pendingPayment = orders.filter(o => o.U === 'Entregado-Pendiente de pago').length;
+  const readyForPickup = orders.filter(o => o.Estado === 'Listo para recoger').length;
+  const delivered = orders.filter(o => o.Estado === 'Entregado').length;
+  const pendingPayment = orders.filter(o => o.Estado === 'Entregado-Pendiente de pago').length;
 
   // Group orders by day
   const ordersByDay = orders.reduce((acc: { [key: string]: number }, order) => {
@@ -135,7 +135,7 @@ const Home = () => {
                     <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
                     <td className="p-3">
                       <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                        {order.U}
+                        {order.Estado}
                       </span>
                     </td>
                   </tr>
