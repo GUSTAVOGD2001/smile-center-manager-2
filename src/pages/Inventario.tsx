@@ -90,7 +90,7 @@ const Inventario = () => {
     }
   };
 
-  const totalDiscos = data.length;
+  const totalDiscos = data.reduce((sum, item) => sum + (item.Total || 0), 0);
   const totalEntregados = data.filter(item => item.Estado === 'Entregado').length;
   const totalNuevos = data.filter(item => item.Estado === 'Nuevo').length;
   const totalRotas = data.reduce((sum, item) => sum + (item['Unidades Rotas'] || 0), 0);
@@ -134,7 +134,7 @@ const Inventario = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Registrados</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Discos</CardTitle>
               <Package className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
