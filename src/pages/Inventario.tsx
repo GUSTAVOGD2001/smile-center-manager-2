@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Package, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardLayout from '@/components/DashboardLayout';
 
 interface InventoryItem {
@@ -100,20 +100,14 @@ const Inventario = () => {
     return sum + rotas;
   }, 0);
 
-  const chartData = data.reduce((acc, item) => {
-    const existing = acc.find(d => d.disco === item.Disco);
-    if (existing) {
-      if (item.Estado === 'Nuevo') existing.nuevos += item.Total || 0;
-      if (item.Estado === 'Entregado') existing.entregados += item.Total || 0;
-    } else {
-      acc.push({
-        disco: item.Disco,
-        nuevos: item.Estado === 'Nuevo' ? item.Total || 0 : 0,
-        entregados: item.Estado === 'Entregado' ? item.Total || 0 : 0,
-      });
-    }
-    return acc;
-  }, [] as Array<{ disco: string; nuevos: number; entregados: number }>);
+  const chartData = data
+    .filter(item => item.Estado === 'Entregado' && item.Disco && item.Disco.trim() !== '' && item.Total > 0)
+    .map(item => ({
+      name: item.Disco,
+      value: item.Total || 0,
+    }));
+
+  const COLORS = ['#3cb371', '#1e90ff', '#ff6b6b', '#ffd93d', '#a78bfa', '#f97316', '#ec4899', '#14b8a6'];
 
   const getEstadoBadge = (estado: string) => {
     if (estado === 'Nuevo') {
@@ -181,19 +175,28 @@ const Inventario = () => {
         {/* Chart */}
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
-            <CardTitle>Total de Unidades por Disco</CardTitle>
+            <CardTitle>Total de Unidades por Disco (Entregados)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="disco" />
-                <YAxis />
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="nuevos" fill="#1e90ff" name="Nuevos" />
-                <Bar dataKey="entregados" fill="#3cb371" name="Entregados" />
-              </BarChart>
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
