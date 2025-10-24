@@ -90,10 +90,15 @@ const Inventario = () => {
     }
   };
 
-  const totalDiscos = data.reduce((sum, item) => sum + (item.Total || 0), 0);
+  const totalDiscos = data.filter(item => item.Estado === 'Nuevo').reduce((sum, item) => sum + (item.Total || 0), 0);
   const totalEntregados = data.filter(item => item.Estado === 'Entregado').length;
   const totalNuevos = data.filter(item => item.Estado === 'Nuevo').length;
-  const totalRotas = data.reduce((sum, item) => sum + (item['Unidades Rotas'] || 0), 0);
+  const totalRotas = data.reduce((sum, item) => {
+    const rotas = typeof item['Unidades Rotas'] === 'string' 
+      ? parseInt(item['Unidades Rotas']) || 0 
+      : item['Unidades Rotas'] || 0;
+    return sum + rotas;
+  }, 0);
 
   const chartData = data.reduce((acc, item) => {
     const existing = acc.find(d => d.disco === item.Disco);
