@@ -1,0 +1,153 @@
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Package, CheckCircle, Truck, AlertCircle } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { toast } from 'sonner';
+
+interface OrderRow {
+  'ID Orden': string;
+  Timestamp: string;
+  U: string;
+  [key: string]: string;
+}
+
+const Home = () => {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      // Replace with your actual GET URL
+      const GET_URL = 'https://script.google.com/macros/s/TU_ID/exec?token=TU_TOKEN';
+      const response = await fetch(GET_URL);
+      const data = await response.json();
+      setOrders(data.rows || []);
+    } catch (error) {
+      toast.error('Error al cargar las órdenes');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalOrders = orders.length;
+  const readyForPickup = orders.filter(o => o.U === 'Listo para recoger').length;
+  const delivered = orders.filter(o => o.U === 'Entregado').length;
+  const pendingPayment = orders.filter(o => o.U === 'Entregado-Pendiente de pago').length;
+
+  // Group orders by day
+  const ordersByDay = orders.reduce((acc: { [key: string]: number }, order) => {
+    const date = new Date(order.Timestamp).toLocaleDateString('es-ES');
+    acc[date] = (acc[date] || 0) + 1;
+    return acc;
+  }, {});
+
+  const chartData = Object.entries(ordersByDay)
+    .map(([date, count]) => ({ date, orders: count }))
+    .slice(-7);
+
+  const kpiCards = [
+    { title: 'Total Órdenes', value: totalOrders, icon: Package, color: 'text-blue-400' },
+    { title: 'Listo para Recoger', value: readyForPickup, icon: CheckCircle, color: 'text-primary' },
+    { title: 'Entregado', value: delivered, icon: Truck, color: 'text-green-400' },
+    { title: 'Pendiente de Pago', value: pendingPayment, icon: AlertCircle, color: 'text-yellow-400' },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando datos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">Vista general de órdenes</p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiCards.map((kpi) => (
+          <Card key={kpi.title} className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
+              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{kpi.value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Órdenes por Día (Últimos 7 días)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+              />
+              <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Recent Orders Table */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Últimas 20 Órdenes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                  <th className="text-left p-3 font-semibold">ID Orden</th>
+                  <th className="text-left p-3 font-semibold">Timestamp</th>
+                  <th className="text-left p-3 font-semibold">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.slice(0, 20).map((order, idx) => (
+                  <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                    <td className="p-3">{order['ID Orden']}</td>
+                    <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
+                    <td className="p-3">
+                      <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                        {order.U}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Home;
