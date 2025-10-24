@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import smileCenterLogo from '@/assets/smile-center-logo.png';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -39,9 +40,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="glass-card p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">
-            SC
-          </div>
+          <img 
+            src={smileCenterLogo} 
+            alt="Smile Center" 
+            className="h-24 w-auto mx-auto mb-6 brightness-0 invert"
+          />
           <h1 className="text-3xl font-bold mb-2">Smile Center</h1>
           <p className="text-muted-foreground">Ingrese sus credenciales</p>
         </div>

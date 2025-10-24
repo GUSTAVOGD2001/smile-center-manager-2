@@ -2,6 +2,7 @@ import { Home, Tag, LogOut } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import smileCenterLogo from '@/assets/smile-center-logo.png';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,7 +27,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Sidebar */}
       <aside className="w-64 glass-card m-4 p-6 flex flex-col">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-primary">Smile Center</h1>
+          <img 
+            src={smileCenterLogo} 
+            alt="Smile Center" 
+            className="h-16 w-auto brightness-0 invert"
+          />
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -55,10 +60,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* Header */}
         <header className="glass-card m-4 mb-0 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">
-              SC
-            </div>
-            <h2 className="text-xl font-semibold">Smile Center Dashboard</h2>
+            <img 
+              src={smileCenterLogo} 
+              alt="Smile Center" 
+              className="h-10 w-auto brightness-0 invert"
+            />
+            <h2 className="text-xl font-semibold">Dashboard</h2>
           </div>
 
           <Button
