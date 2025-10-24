@@ -90,9 +90,9 @@ const Inventario = () => {
     }
   };
 
-  const totalDiscos = data.filter(item => item.Estado === 'Nuevo').reduce((sum, item) => sum + (item.Total || 0), 0);
-  const totalEntregados = data.filter(item => item.Estado === 'Entregado').length;
-  const totalNuevos = data.filter(item => item.Estado === 'Nuevo').length;
+  const totalNuevos = data.filter(item => item.Estado === 'Nuevo').reduce((sum, item) => sum + (item.Total || 0), 0);
+  const totalEntregados = data.filter(item => item.Estado === 'Entregado').reduce((sum, item) => sum + (item.Total || 0), 0);
+  const totalDiscos = totalNuevos + totalEntregados - 2;
   const totalRotas = data.reduce((sum, item) => {
     const rotas = typeof item['Unidades Rotas'] === 'string' 
       ? parseInt(item['Unidades Rotas']) || 0 
@@ -149,21 +149,21 @@ const Inventario = () => {
 
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Entregados</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalEntregados}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Nuevos</CardTitle>
               <Clock className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalNuevos}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Entregados</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalEntregados}</div>
             </CardContent>
           </Card>
 
