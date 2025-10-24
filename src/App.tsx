@@ -11,18 +11,50 @@ import ModificarEstados from "./pages/ModificarEstados";
 import Configuracion from "./pages/Configuracion";
 import Inventario from "./pages/Inventario";
 import HomeUsuario from "./pages/HomeUsuario";
+import HomeSecretaria from "./pages/HomeSecretaria";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin } = useAuth();
-  return isAdmin() ? <>{children}</> : <Navigate to="/home-usuario" replace />;
+  const { isAdmin, currentUser } = useAuth();
+  
+  if (!isAdmin()) {
+    if (currentUser?.role === 'secretaria') {
+      return <Navigate to="/home-secretaria" replace />;
+    }
+    return <Navigate to="/home-usuario" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
 const UserRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin } = useAuth();
-  return !isAdmin() ? <>{children}</> : <Navigate to="/" replace />;
+  const { isAdmin, currentUser } = useAuth();
+  
+  if (isAdmin()) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (currentUser?.role === 'secretaria') {
+    return <Navigate to="/home-secretaria" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+const SecretariaRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, isSecretaria } = useAuth();
+  
+  if (isAdmin()) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (!isSecretaria()) {
+    return <Navigate to="/home-usuario" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
 const queryClient = new QueryClient();
@@ -91,6 +123,18 @@ const App = () => (
                       <HomeUsuario />
                     </DashboardLayout>
                   </UserRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/home-secretaria"
+              element={
+                <AuthGuard>
+                  <SecretariaRoute>
+                    <DashboardLayout>
+                      <HomeSecretaria />
+                    </DashboardLayout>
+                  </SecretariaRoute>
                 </AuthGuard>
               }
             />

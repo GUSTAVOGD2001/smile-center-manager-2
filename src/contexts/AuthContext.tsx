@@ -3,7 +3,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface User {
   username: string;
   password: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'secretaria';
+  requirePasswordChange?: boolean;
 }
 
 interface AuthContextType {
@@ -16,6 +17,8 @@ interface AuthContextType {
   updateUser: (username: string, updatedUser: User) => void;
   deleteUser: (username: string) => void;
   isAdmin: () => boolean;
+  isSecretaria: () => boolean;
+  changePassword: (newPassword: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEFAULT_USERS: User[] = [
   { username: 'SMILEADMIN', password: 'Karla12345', role: 'admin' },
   { username: 'Usuario1', password: '1234', role: 'user' },
+  { username: 'SecretariaSmile', password: 'Vani123', role: 'secretaria', requirePasswordChange: true },
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -76,6 +80,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAdmin = () => currentUser?.role === 'admin';
+  
+  const isSecretaria = () => currentUser?.role === 'secretaria';
+
+  const changePassword = (newPassword: string) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, password: newPassword, requirePasswordChange: false };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('smileCurrentUser', JSON.stringify(updatedUser));
+      setUsers(prev => prev.map(u => u.username === currentUser.username ? updatedUser : u));
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ 
@@ -87,7 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addUser,
       updateUser,
       deleteUser,
-      isAdmin
+      isAdmin,
+      isSecretaria,
+      changePassword
     }}>
       {children}
     </AuthContext.Provider>
