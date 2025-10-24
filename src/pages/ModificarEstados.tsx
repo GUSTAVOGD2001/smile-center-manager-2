@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -35,6 +36,7 @@ const ModificarEstados = () => {
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
+  const [searchName, setSearchName] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ const ModificarEstados = () => {
 
   useEffect(() => {
     filterOrders();
-  }, [orders, dateFrom, dateTo]);
+  }, [orders, dateFrom, dateTo, searchName]);
 
   const filterOrders = () => {
     let filtered = [...orders];
@@ -59,6 +61,15 @@ const ModificarEstados = () => {
       filtered = filtered.filter(order => {
         const orderDate = new Date(order.Timestamp);
         return orderDate <= dateTo;
+      });
+    }
+
+    if (searchName) {
+      filtered = filtered.filter(order => {
+        const nombre = order['Nombre']?.toLowerCase() || '';
+        const apellido = order['Apellido']?.toLowerCase() || '';
+        const searchLower = searchName.toLowerCase();
+        return nombre.includes(searchLower) || apellido.includes(searchLower);
       });
     }
 
@@ -169,72 +180,86 @@ const ModificarEstados = () => {
           <CardTitle>Gestión de Estados de Órdenes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-6 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "PPP") : <span>Fecha desde</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+          <div className="space-y-4 mb-6">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar por nombre..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+              />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "PPP") : <span>Fecha hasta</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, "PPP") : <span>Fecha desde</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, "PPP") : <span>Fecha hasta</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+                  setSearchName('');
+                }}
+              >
+                Limpiar Filtros
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setDateFrom(undefined);
-                setDateTo(undefined);
-              }}
-            >
-              Limpiar Filtros
-            </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[rgba(255,255,255,0.1)]">
                   <th className="text-left p-3 font-semibold">ID Orden</th>
+                  <th className="text-left p-3 font-semibold">Nombre</th>
+                  <th className="text-left p-3 font-semibold">Costo</th>
+                  <th className="text-left p-3 font-semibold">A Cuenta</th>
                   <th className="text-left p-3 font-semibold">Timestamp</th>
                   <th className="text-left p-3 font-semibold">Estado</th>
                   <th className="text-left p-3 font-semibold">Acción</th>
@@ -248,6 +273,9 @@ const ModificarEstados = () => {
                   return (
                     <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
                       <td className="p-3">{orderId}</td>
+                      <td className="p-3">{order['Nombre']} {order['Apellido']}</td>
+                      <td className="p-3">${order['Costo'] || '0'}</td>
+                      <td className="p-3">${order['A Cuenta'] || '0'}</td>
                       <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
