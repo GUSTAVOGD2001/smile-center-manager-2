@@ -244,7 +244,7 @@ const Inventario = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredData.map((item, index) => (
+                    {filteredData.filter(item => item.Disco && item.Disco.trim() !== '').map((item, index) => (
                       <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
                         <TableCell>{item['Fecha de Registro']}</TableCell>
                         <TableCell className="font-medium">{item.Disco}</TableCell>
