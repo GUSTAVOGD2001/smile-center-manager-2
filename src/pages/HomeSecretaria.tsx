@@ -23,6 +23,7 @@ interface OrderRow {
   'Tipo de trabajo'?: string;
   Material?: string;
   'Especificación'?: string;
+  Recibo?: string;
   ReciboURL?: string;
   [key: string]: string | undefined;
 }
@@ -325,11 +326,14 @@ const HomeSecretaria = () => {
                               <Eye size={16} />
                               Ver Detalles
                             </Button>
-                            {order.ReciboURL && (
+                            {(order.ReciboURL || order.Recibo) && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(order.ReciboURL, '_blank')}
+                                onClick={() => {
+                                  const url = order.ReciboURL || order.Recibo;
+                                  if (url) window.open(url, '_blank');
+                                }}
                                 className="gap-2"
                               >
                                 <FileText size={16} />
@@ -416,13 +420,12 @@ const HomeSecretaria = () => {
                     </div>
                   </div>
                 </div>
-                {selectedOrder.ReciboURL && (
+                {(selectedOrder.ReciboURL || selectedOrder.Recibo) && (
                   <div className="mt-4">
                     <Button
                       onClick={() => {
-                        if (selectedOrder.ReciboURL) {
-                          window.open(selectedOrder.ReciboURL, '_blank');
-                        }
+                        const url = selectedOrder.ReciboURL || selectedOrder.Recibo;
+                        if (url) window.open(url, '_blank');
                       }}
                       className="w-full gap-2"
                     >
