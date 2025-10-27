@@ -181,12 +181,16 @@ const HomeUsuario = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Ingresado">Ingresado</SelectItem>
-                            <SelectItem value="En Proceso">En Proceso</SelectItem>
+                            <SelectItem value="Recepcion">Recepcion</SelectItem>
+                            <SelectItem value="Area de yeso">Area de yeso</SelectItem>
+                            <SelectItem value="Diseño">Diseño</SelectItem>
+                            <SelectItem value="Area de fresado">Area de fresado</SelectItem>
+                            <SelectItem value="Ajuste">Ajuste</SelectItem>
+                            <SelectItem value="Terminado">Terminado</SelectItem>
                             <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
+                            <SelectItem value="Cancelado">Cancelado</SelectItem>
                             <SelectItem value="Entregado">Entregado</SelectItem>
                             <SelectItem value="Entregado-Pendiente de pago">Entregado-Pendiente de pago</SelectItem>
-                            <SelectItem value="Cancelado">Cancelado</SelectItem>
                           </SelectContent>
                         </Select>
                       </td>
