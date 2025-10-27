@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, DollarSign, Wallet } from 'lucide-react';
+import { CalendarIcon, DollarSign, Wallet, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -334,22 +334,36 @@ const ModificarEstados = () => {
                         </span>
                       </td>
                       <td className="p-3">
-                        <Select
-                          value={order.Estado}
-                          onValueChange={(value) => updateEstado(order, value)}
-                          disabled={isUpdating}
-                        >
-                          <SelectTrigger className="w-[220px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
-                            {ESTADOS.map((estado) => (
-                              <SelectItem key={estado} value={estado}>
-                                {estado}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex gap-2">
+                          <Select
+                            value={order.Estado}
+                            onValueChange={(value) => updateEstado(order, value)}
+                            disabled={isUpdating}
+                          >
+                            <SelectTrigger className="w-[220px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
+                              {ESTADOS.map((estado) => (
+                                <SelectItem key={estado} value={estado}>
+                                  {estado}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${orderId}&format=a4`;
+                              window.open(receiptUrl, '_blank');
+                            }}
+                            className="gap-2"
+                          >
+                            <FileText size={16} />
+                            Ver Recibo
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
