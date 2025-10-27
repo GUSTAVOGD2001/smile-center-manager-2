@@ -103,7 +103,8 @@ const Inventario = () => {
 
   const totalNuevos = data.filter(item => item.Disco && item.Disco.trim() !== '' && item.Estado === 'Nuevo').length;
   const totalEntregados = data.filter(item => item.Disco && item.Disco.trim() !== '' && item.Estado === 'Entregado').length;
-  const totalDiscos = totalNuevos + totalEntregados;
+  const totalTerminados = data.filter(item => item.Disco && item.Disco.trim() !== '' && item.Estado === 'Terminado').length;
+  const totalDiscos = totalNuevos + totalEntregados + totalTerminados;
   const totalRotas = data.reduce((sum, item) => {
     const rotas = typeof item['Unidades Rotas'] === 'string' 
       ? parseInt(item['Unidades Rotas']) || 0 
@@ -127,6 +128,9 @@ const Inventario = () => {
     if (estado === 'Entregado') {
       return <Badge style={{ backgroundColor: '#3cb371', color: 'white' }}>Entregado</Badge>;
     }
+    if (estado === 'Terminado') {
+      return <Badge style={{ backgroundColor: '#f97316', color: 'white' }}>Terminado</Badge>;
+    }
     return <Badge variant="outline">{estado}</Badge>;
   };
 
@@ -141,7 +145,7 @@ const Inventario = () => {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total de Discos</CardTitle>
@@ -159,6 +163,16 @@ const Inventario = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalNuevos}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Terminados</CardTitle>
+              <CheckCircle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalTerminados}</div>
             </CardContent>
           </Card>
 
@@ -232,6 +246,7 @@ const Inventario = () => {
                 <SelectContent>
                   <SelectItem value="Todos">Todos</SelectItem>
                   <SelectItem value="Nuevo">Nuevos</SelectItem>
+                  <SelectItem value="Terminado">Terminado</SelectItem>
                   <SelectItem value="Entregado">Entregados</SelectItem>
                 </SelectContent>
               </Select>
