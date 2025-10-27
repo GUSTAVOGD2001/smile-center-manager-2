@@ -326,20 +326,18 @@ const HomeSecretaria = () => {
                               <Eye size={16} />
                               Ver Detalles
                             </Button>
-                            {(order.ReciboURL || order.Recibo) && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const url = order.ReciboURL || order.Recibo;
-                                  if (url) window.open(url, '_blank');
-                                }}
-                                className="gap-2"
-                              >
-                                <FileText size={16} />
-                                Ver Recibo
-                              </Button>
-                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${order['ID Orden']}&format=a4`;
+                                window.open(receiptUrl, '_blank');
+                              }}
+                              className="gap-2"
+                            >
+                              <FileText size={16} />
+                              Ver Recibo
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -420,20 +418,18 @@ const HomeSecretaria = () => {
                     </div>
                   </div>
                 </div>
-                {(selectedOrder.ReciboURL || selectedOrder.Recibo) && (
-                  <div className="mt-4">
-                    <Button
-                      onClick={() => {
-                        const url = selectedOrder.ReciboURL || selectedOrder.Recibo;
-                        if (url) window.open(url, '_blank');
-                      }}
-                      className="w-full gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver Recibo
-                    </Button>
-                  </div>
-                )}
+                <div className="mt-4">
+                  <Button
+                    onClick={() => {
+                      const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${selectedOrder['ID Orden']}&format=a4`;
+                      window.open(receiptUrl, '_blank');
+                    }}
+                    className="w-full gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Ver Recibo
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
