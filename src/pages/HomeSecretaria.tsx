@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
 
@@ -315,15 +315,28 @@ const HomeSecretaria = () => {
                           </Select>
                         </td>
                         <td className="p-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => showDetails(order)}
-                            className="gap-2"
-                          >
-                            <Eye size={16} />
-                            Ver Detalles
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => showDetails(order)}
+                              className="gap-2"
+                            >
+                              <Eye size={16} />
+                              Ver Detalles
+                            </Button>
+                            {order.ReciboURL && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(order.ReciboURL, '_blank')}
+                                className="gap-2"
+                              >
+                                <FileText size={16} />
+                                Ver Recibo
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
