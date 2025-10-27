@@ -7,9 +7,14 @@ import { toast } from 'sonner';
 
 interface OrderRow {
   'ID Orden': string;
-  Timestamp: string;
-  Estado: string;
-  [key: string]: string;
+  Timestamp?: string;
+  Estado?: string;
+  'Fecha de Registro'?: string;
+  'Fecha Requerida'?: string;
+  fecha_requerida?: string;
+  requiredDate?: string;
+  created_at?: string;
+  [key: string]: string | undefined;
 }
 
 const Home = () => {
@@ -38,6 +43,32 @@ const Home = () => {
   const readyForPickup = orders.filter(o => o.Estado === 'Listo para recoger').length;
   const delivered = orders.filter(o => o.Estado === 'Entregado').length;
   const pendingPayment = orders.filter(o => o.Estado === 'Entregado-Pendiente de pago').length;
+
+  const latest20Orders = [...orders]
+    .sort((a, b) => {
+      const dateAString = a.Timestamp || a['Fecha de Registro'] || a.created_at;
+      const dateBString = b.Timestamp || b['Fecha de Registro'] || b.created_at;
+
+      const dateA = dateAString ? new Date(dateAString).getTime() : 0;
+      const dateB = dateBString ? new Date(dateBString).getTime() : 0;
+
+      return dateB - dateA;
+    })
+    .slice(0, 20);
+
+  const formatDateValue = (value?: string) => {
+    if (!value) {
+      return '-';
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return value;
+    }
+
+    return parsedDate.toLocaleString('es-ES');
+  };
   
   // Calculate total Piezas Dentales
   const totalPiezasDentales = orders.reduce((sum, order) => {
@@ -142,21 +173,29 @@ const Home = () => {
                 <tr className="border-b border-[rgba(255,255,255,0.1)]">
                   <th className="text-left p-3 font-semibold">ID Orden</th>
                   <th className="text-left p-3 font-semibold">Timestamp</th>
+                  <th className="text-left p-3 font-semibold">Fecha Requerida</th>
                   <th className="text-left p-3 font-semibold">Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.slice(0, 20).map((order, idx) => (
-                  <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
-                    <td className="p-3">{order['ID Orden']}</td>
-                    <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
-                    <td className="p-3">
-                      <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                        {order.Estado}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {latest20Orders.map((order, idx) => {
+                  const timestampValue = order.Timestamp || order['Fecha de Registro'] || order.created_at;
+                  const requiredDate =
+                    order['Fecha Requerida'] || order.fecha_requerida || order.requiredDate;
+
+                  return (
+                    <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                      <td className="p-3">{order['ID Orden']}</td>
+                      <td className="p-3">{formatDateValue(timestampValue)}</td>
+                      <td className="p-3">{formatDateValue(requiredDate)}</td>
+                      <td className="p-3">
+                        <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                          {order.Estado}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
