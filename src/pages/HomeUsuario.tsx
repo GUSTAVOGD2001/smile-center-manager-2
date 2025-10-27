@@ -18,6 +18,7 @@ interface OrderRow {
   'Tipo de trabajo'?: string;
   Material?: string;
   'Especificación'?: string;
+  ReciboURL?: string;
   [key: string]: string | undefined;
 }
 
@@ -256,6 +257,22 @@ const HomeUsuario = () => {
                     {selectedOrder['Especificación'] || 'N/A'}
                   </div>
                 </div>
+                {selectedOrder.ReciboURL && (
+                  <div className="flex flex-col gap-2">
+                    <Label>Recibo</Label>
+                    <Button
+                      onClick={() => {
+                        if (selectedOrder.ReciboURL) {
+                          window.open(selectedOrder.ReciboURL, '_blank');
+                        }
+                      }}
+                      className="gap-2 bg-primary text-primary-foreground"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver Recibo
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
