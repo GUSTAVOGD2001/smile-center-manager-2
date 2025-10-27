@@ -81,8 +81,16 @@ const HomeSecretaria = () => {
       toast.error('Ingrese un ID de orden para buscar');
       return;
     }
+    
+    // Format search term: if it's a number, convert to ORD-XXXX format
+    let formattedSearchTerm = searchTerm.trim();
+    if (/^\d+$/.test(formattedSearchTerm)) {
+      const orderNumber = formattedSearchTerm.padStart(4, '0');
+      formattedSearchTerm = `ORD-${orderNumber}`;
+    }
+    
     const results = orders.filter(order => 
-      order['ID Orden']?.toLowerCase().includes(searchTerm.toLowerCase())
+      order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
     );
     setSearchResults(results);
     if (results.length === 0) {
@@ -394,23 +402,22 @@ const HomeSecretaria = () => {
                       {selectedOrder['Especificación'] || 'N/A'}
                     </div>
                   </div>
-                  {selectedOrder.ReciboURL && (
-                    <div className="flex flex-col gap-2">
-                      <Label>Recibo</Label>
-                      <Button
-                        onClick={() => {
-                          if (selectedOrder.ReciboURL) {
-                            window.open(selectedOrder.ReciboURL, '_blank');
-                          }
-                        }}
-                        className="gap-2 bg-primary text-primary-foreground"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Ver Recibo
-                      </Button>
-                    </div>
-                  )}
                 </div>
+                {selectedOrder.ReciboURL && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => {
+                        if (selectedOrder.ReciboURL) {
+                          window.open(selectedOrder.ReciboURL, '_blank');
+                        }
+                      }}
+                      className="w-full gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver Recibo
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
