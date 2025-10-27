@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, FileText } from 'lucide-react';
 
 interface OrderRow {
   'ID Orden': string;
@@ -18,6 +18,7 @@ interface OrderRow {
   'Tipo de trabajo'?: string;
   Material?: string;
   'Especificación'?: string;
+  Recibo?: string;
   ReciboURL?: string;
   [key: string]: string | undefined;
 }
@@ -62,8 +63,16 @@ const HomeUsuario = () => {
       toast.error('Ingrese un ID de orden para buscar');
       return;
     }
+    
+    // Format search term: if it's a number, convert to ORD-XXXX format
+    let formattedSearchTerm = searchTerm.trim();
+    if (/^\d+$/.test(formattedSearchTerm)) {
+      const orderNumber = formattedSearchTerm.padStart(4, '0');
+      formattedSearchTerm = `ORD-${orderNumber}`;
+    }
+    
     const results = orders.filter(order => 
-      order['ID Orden']?.toLowerCase().includes(searchTerm.toLowerCase())
+      order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
     );
     setSearchResults(results);
     if (results.length === 0) {
@@ -182,15 +191,29 @@ const HomeUsuario = () => {
                         </Select>
                       </td>
                       <td className="p-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => showDetails(order)}
-                          className="gap-2"
-                        >
-                          <Eye size={16} />
-                          Ver Detalles
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => showDetails(order)}
+                            className="gap-2"
+                          >
+                            <Eye size={16} />
+                            Ver Detalles
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${order['ID Orden']}&format=a4`;
+                              window.open(receiptUrl, '_blank');
+                            }}
+                            className="gap-2"
+                          >
+                            <FileText size={16} />
+                            Ver Recibo
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -257,22 +280,18 @@ const HomeUsuario = () => {
                     {selectedOrder['Especificación'] || 'N/A'}
                   </div>
                 </div>
-                {selectedOrder.ReciboURL && (
-                  <div className="flex flex-col gap-2">
-                    <Label>Recibo</Label>
-                    <Button
-                      onClick={() => {
-                        if (selectedOrder.ReciboURL) {
-                          window.open(selectedOrder.ReciboURL, '_blank');
-                        }
-                      }}
-                      className="gap-2 bg-primary text-primary-foreground"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver Recibo
-                    </Button>
-                  </div>
-                )}
+              </div>
+              <div className="mt-4">
+                <Button
+                  onClick={() => {
+                    const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${selectedOrder['ID Orden']}&format=a4`;
+                    window.open(receiptUrl, '_blank');
+                  }}
+                  className="w-full gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver Recibo
+                </Button>
               </div>
             </div>
           )}
