@@ -172,8 +172,8 @@ const Home = () => {
               <thead>
                 <tr className="border-b border-[rgba(255,255,255,0.1)]">
                   <th className="text-left p-3 font-semibold">ID Orden</th>
-                  <th className="text-left p-3 font-semibold">Timestamp</th>
                   <th className="text-left p-3 font-semibold">Fecha Requerida</th>
+                  <th className="text-left p-3 font-semibold">Timestamp</th>
                   <th className="text-left p-3 font-semibold">Estado</th>
                 </tr>
               </thead>
@@ -186,8 +186,8 @@ const Home = () => {
                   return (
                     <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
                       <td className="p-3">{order['ID Orden']}</td>
-                      <td className="p-3">{formatDateValue(timestampValue)}</td>
                       <td className="p-3">{formatDateValue(requiredDate)}</td>
+                      <td className="p-3">{formatDateValue(timestampValue)}</td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
                           {order.Estado}
