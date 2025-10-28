@@ -193,11 +193,9 @@ const Finanzas = () => {
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categorias.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Laboratorio">Laboratorio</SelectItem>
+                      <SelectItem value="Doctor">Doctor</SelectItem>
+                      <SelectItem value="Consultorio">Consultorio</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
