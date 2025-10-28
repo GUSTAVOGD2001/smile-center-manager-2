@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import ModificarEstados from "./pages/ModificarEstados";
 import Configuracion from "./pages/Configuracion";
 import Inventario from "./pages/Inventario";
+import Finanzas from "./pages/Finanzas";
 import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
 import Login from "./pages/Login";
@@ -110,6 +111,18 @@ const App = () => (
                 <AuthGuard>
                   <AdminRoute>
                     <Inventario />
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/finanzas"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Finanzas />
+                    </DashboardLayout>
                   </AdminRoute>
                 </AuthGuard>
               }
