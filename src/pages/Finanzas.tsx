@@ -4,9 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, Calendar, Plus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDateDMY } from '@/utils/date';
+import { formatDateDMY, parseAnyDate } from '@/utils/date';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const API_URL_GET  = "https://script.google.com/macros/s/AKfycbzPH4c7EukmqID9K_fWdI30pZ6yWSA8zEW1sFsSKOkCa_5we4BeRgtDIuiXan4mWLDcTA/exec?key=123tamarindo";
 const API_URL_POST = "https://script.google.com/macros/s/AKfycbzPH4c7EukmqID9K_fWdI30pZ6yWSA8zEW1sFsSKOkCa_5we4BeRgtDIuiXan4mWLDcTA/exec";
@@ -62,6 +66,8 @@ const Finanzas = () => {
   const [categorias, setCategorias] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categoriaFilter, setCategoriaFilter] = useState<string>('Todas');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
   
   // Form state
@@ -116,9 +122,17 @@ const Finanzas = () => {
     }
   };
 
-  const filteredGastos = categoriaFilter === 'Todas' 
-    ? gastos 
-    : gastos.filter(g => g.Categoria === categoriaFilter);
+  const filteredGastos = gastos.filter(g => {
+    // Filter by category
+    const matchesCategoria = categoriaFilter === 'Todas' || g.Categoria === categoriaFilter;
+    
+    // Filter by date range
+    const gastoDate = parseAnyDate(g.Fecha);
+    const matchesDateFrom = !dateFrom || !gastoDate || gastoDate >= dateFrom;
+    const matchesDateTo = !dateTo || !gastoDate || gastoDate <= dateTo;
+    
+    return matchesCategoria && matchesDateFrom && matchesDateTo;
+  });
 
   const totalGastos = filteredGastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0);
   const gastoPromedio = filteredGastos.length > 0 ? totalGastos / filteredGastos.length : 0;
@@ -278,21 +292,89 @@ const Finanzas = () => {
       {/* Filters */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Label htmlFor="filter-categoria">Filtrar por categoría:</Label>
-            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todas">Todas</SelectItem>
-                {categorias.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <Label htmlFor="filter-categoria">Categoría:</Label>
+              <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todas">Todas</SelectItem>
+                  {categorias.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-4 flex-wrap">
+              <Label>Fecha:</Label>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[160px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Desde"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[160px] justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Hasta"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setDateFrom(undefined);
+                    setDateTo(undefined);
+                  }}
+                  title="Limpiar filtros de fecha"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
