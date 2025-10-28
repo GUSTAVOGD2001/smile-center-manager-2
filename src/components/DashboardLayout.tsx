@@ -22,6 +22,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/modificar-estados', label: 'Modificar estados', icon: Tag },
     { path: '/inventario', label: 'Inventario', icon: Package },
     { path: '/finanzas', label: 'Egresos', icon: DollarSign },
+    { path: '/ingresos', label: 'Ingresos', icon: DollarSign },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ];
 

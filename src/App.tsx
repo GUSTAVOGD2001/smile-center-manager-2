@@ -11,6 +11,7 @@ import ModificarEstados from "./pages/ModificarEstados";
 import Configuracion from "./pages/Configuracion";
 import Inventario from "./pages/Inventario";
 import Finanzas from "./pages/Finanzas";
+import Ingresos from "./pages/Ingresos";
 import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
 import Login from "./pages/Login";
@@ -122,6 +123,18 @@ const App = () => (
                   <AdminRoute>
                     <DashboardLayout>
                       <Finanzas />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/ingresos"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Ingresos />
                     </DashboardLayout>
                   </AdminRoute>
                 </AuthGuard>
