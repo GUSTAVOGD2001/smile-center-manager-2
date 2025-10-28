@@ -1,4 +1,4 @@
-import { Home, Tag, LogOut, Settings, Search, Package, DollarSign } from 'lucide-react';
+import { Home, Tag, LogOut, Settings, Search, Package, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/modificar-estados', label: 'Modificar estados', icon: Tag },
     { path: '/inventario', label: 'Inventario', icon: Package },
-    { path: '/finanzas', label: 'Egresos', icon: DollarSign },
-    { path: '/ingresos', label: 'Ingresos', icon: DollarSign },
+    { path: '/finanzas', label: 'Egresos', icon: ArrowDownCircle },
+    { path: '/ingresos', label: 'Ingresos', icon: ArrowUpCircle },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ];
 

@@ -123,6 +123,10 @@ const Finanzas = () => {
   const totalGastos = filteredGastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0);
   const gastoPromedio = filteredGastos.length > 0 ? totalGastos / filteredGastos.length : 0;
   
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  
   // Get current month's gastos
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -237,7 +241,7 @@ const Finanzas = () => {
             <DollarSign className="h-5 w-5 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${totalGastos.toFixed(2)}</div>
+            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {filteredGastos.length} gastos registrados
             </p>
@@ -250,7 +254,7 @@ const Finanzas = () => {
             <TrendingUp className="h-5 w-5 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${gastoPromedio.toFixed(2)}</div>
+            <div className="text-3xl font-bold">${formatCurrency(gastoPromedio)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Por gasto
             </p>
@@ -263,7 +267,7 @@ const Finanzas = () => {
             <Calendar className="h-5 w-5 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${totalMesActual.toFixed(2)}</div>
+            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {gastosMesActual.length} gastos este mes
             </p>
