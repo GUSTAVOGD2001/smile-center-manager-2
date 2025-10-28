@@ -8,7 +8,9 @@ import { DollarSign, TrendingUp, Calendar, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateDMY } from '@/utils/date';
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzPH4c7EukmqID9K_fWdI30pZ6yWSA8zEW1sFsSKOkCa_5we4BeRgtDIuiXan4mWLDcTA/exec?key=123tamarindo";
+const API_URL_GET  = "https://script.google.com/macros/s/AKfycbzPH4c7EukmqID9K_fWdI30pZ6yWSA8zEW1sFsSKOkCa_5we4BeRgtDIuiXan4mWLDcTA/exec?key=123tamarindo";
+const API_URL_POST = "https://script.google.com/macros/s/AKfycbzPH4c7EukmqID9K_fWdI30pZ6yWSA8zEW1sFsSKOkCa_5we4BeRgtDIuiXan4mWLDcTA/exec";
+const API_KEY = "123tamarindo";
 
 interface Gasto {
   'ID Gasto': string;
@@ -24,7 +26,7 @@ interface GastosData {
 }
 
 async function getGastos(): Promise<GastosData> {
-  const res = await fetch(API_URL);
+  const res = await fetch(API_URL_GET);
   const data = await res.json();
   return data;
 }
@@ -35,16 +37,22 @@ async function crearGasto({ fecha, monto, categoria, motivo }: {
   categoria: string; 
   motivo: string 
 }) {
-  const res = await fetch(API_URL, {
+  const payload = {
+    apiKey: API_KEY,
+    fecha: fecha || "",
+    monto: monto,
+    categoria: categoria,
+    motivo: motivo
+  };
+
+  const res = await fetch(API_URL_POST, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fecha: fecha,
-      monto: monto,
-      categoria: categoria,
-      motivo: motivo
-    })
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(payload)
   });
+
   const data = await res.json();
   return data;
 }
