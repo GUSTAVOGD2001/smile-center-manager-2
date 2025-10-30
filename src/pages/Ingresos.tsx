@@ -238,11 +238,10 @@ const Ingresos = () => {
                       <SelectValue placeholder="Selecciona un método de pago" />
                     </SelectTrigger>
                     <SelectContent>
-                      {metodosDePago.map((metodo) => (
-                        <SelectItem key={metodo} value={metodo}>
-                          {metodo}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Cuenta BBVA Karla">Cuenta BBVA Karla</SelectItem>
+                      <SelectItem value="Efectivo">Efectivo</SelectItem>
+                      <SelectItem value="Cuenta BBVA Lalo">Cuenta BBVA Lalo</SelectItem>
+                      <SelectItem value="Cuenta MP Lalo">Cuenta MP Lalo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
