@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { formatDateDMY, parseAnyDate } from '@/utils/date';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const API_URL_GET  = "https://script.google.com/macros/s/AKfycby98jkVeS7ANZsN-44l4WuCb2mFU2S-t1uBetIjVUFiRd5HqznDpUrFgo-tTX9nmEhfqA/exec?key=123tamarindo";
 const API_URL_POST = "https://script.google.com/macros/s/AKfycby98jkVeS7ANZsN-44l4WuCb2mFU2S-t1uBetIjVUFiRd5HqznDpUrFgo-tTX9nmEhfqA/exec";
@@ -156,6 +157,17 @@ const Ingresos = () => {
     return ingresoDate.getMonth() === currentMonth && ingresoDate.getFullYear() === currentYear;
   });
   const totalMesActual = ingresosMesActual.reduce((sum, i) => sum + (parseFloat(String(i['Monto de Ingreso'])) || 0), 0);
+
+  // Group ingresos by day for chart
+  const ingresosByDay = filteredIngresos.reduce((acc: { [key: string]: number }, ingreso) => {
+    const date = new Date(ingreso.Fecha).toLocaleDateString('es-ES');
+    acc[date] = (acc[date] || 0) + (parseFloat(String(ingreso['Monto de Ingreso'])) || 0);
+    return acc;
+  }, {});
+
+  const chartData = Object.entries(ingresosByDay)
+    .map(([date, monto]) => ({ date, monto }))
+    .slice(-7);
 
   if (isLoading) {
     return (
@@ -308,6 +320,31 @@ const Ingresos = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chart */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Ingresos por Día (Últimos 7 días)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+                formatter={(value: number) => `$${value.toFixed(2)}`}
+              />
+              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
