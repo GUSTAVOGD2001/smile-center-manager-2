@@ -247,20 +247,38 @@ const HomeSecretaria = () => {
     }
     setIsSearchingByDate(true);
     try {
-      const formattedDate = toDMY(searchDate);
-      const url = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${encodeURIComponent(formattedDate)}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      // Obtener todas las órdenes
+      const GET_URL = `${API_URL}?token=${API_TOKEN}`;
+      const response = await fetch(GET_URL);
+      const data = await response.json();
 
       if (data?.ok && Array.isArray(data.rows)) {
-        setSearchResults(data.rows as OrderRow[]);
+        const allOrders = data.rows as OrderRow[];
+        
+        // Convertir la fecha seleccionada a objeto Date (solo fecha, sin hora)
+        const [year, month, day] = searchDate.split('-').map(Number);
+        const selectedDate = new Date(year, month - 1, day);
+        
+        // Filtrar órdenes que coincidan con la fecha seleccionada
+        const filteredOrders = allOrders.filter((order: OrderRow) => {
+          if (!order.Timestamp) return false;
+          const orderDate = new Date(order.Timestamp);
+          return (
+            orderDate.getFullYear() === selectedDate.getFullYear() &&
+            orderDate.getMonth() === selectedDate.getMonth() &&
+            orderDate.getDate() === selectedDate.getDate()
+          );
+        });
+
+        setSearchResults(filteredOrders);
         setHasSearched(true);
         setSelectedOrder(null);
-        toast.success(`Se encontraron ${data.rows.length} órdenes para ${formattedDate}`);
+        const formattedDate = toDMY(searchDate);
+        toast.success(`Se encontraron ${filteredOrders.length} órdenes para ${formattedDate}`);
       } else {
         setSearchResults([]);
         setHasSearched(true);
-        toast.error(data?.message || 'No se encontraron órdenes para esa fecha');
+        toast.error('No se pudieron obtener las órdenes');
       }
     } catch (error: any) {
       setSearchResults([]);
