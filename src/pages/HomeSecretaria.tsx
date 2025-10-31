@@ -127,12 +127,11 @@ function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (
   }
 
   return (
-    <Select value={orden.Estado || ''} onValueChange={onChangeEstado} disabled={saving}>
+    <Select value={orden.Estado || undefined} onValueChange={onChangeEstado} disabled={saving}>
       <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
         <SelectValue placeholder="-- Selecciona --" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">-- Selecciona --</SelectItem>
         {ESTADOS.map(estado => (
           <SelectItem key={estado} value={estado}>
             {estado}
