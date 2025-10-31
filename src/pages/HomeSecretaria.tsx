@@ -323,7 +323,7 @@ const HomeSecretaria = () => {
         action: 'update',
         keyColumn: 'ID Orden',
         keyValue: order['ID Orden'],
-        [field === 'Diseñadores' ? 'newDesigner' : 'newRepartidor']: newValue,
+        newRepartidor: newValue,
         debug: true
       };
 
