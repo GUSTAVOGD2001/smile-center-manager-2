@@ -9,6 +9,7 @@ import { CalendarIcon, DollarSign, Wallet, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { buildReciboUrl } from '@/lib/urls';
 
 interface OrderRow {
   'ID Orden': string;
@@ -355,7 +356,7 @@ const ModificarEstados = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${orderId}&format=a4`;
+                              const receiptUrl = buildReciboUrl(orderId, 'a4');
                               window.open(receiptUrl, '_blank');
                             }}
                             className="gap-2"
