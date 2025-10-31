@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Search, Eye, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
-import { actualizarDisenador, actualizarEstadoOrden, obtenerOrdenesPorFecha } from '@/services/api';
+import { actualizarDisenador, obtenerOrdenesPorFecha } from '@/services/api';
 import type { OrdenResumen } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
@@ -116,8 +116,30 @@ function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (
     setSaving(true);
 
     try {
-      await actualizarEstadoOrden({ id: orderId, nuevoEstado: nuevo });
-      toast.success(`Estado actualizado (${orderId})`);
+      const requestBody = {
+        token: API_TOKEN,
+        action: 'update',
+        keyColumn: 'ID Orden',
+        keyValue: orderId,
+        newStatus: nuevo,
+      };
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        toast.success(`Estado actualizado (${orderId})`);
+      } else {
+        onChange({ ...orden, Estado: prevEstado });
+        toast.error(result.message || 'No se pudo actualizar el estado');
+      }
     } catch (error: any) {
       onChange({ ...orden, Estado: prevEstado });
       toast.error(error?.message || 'No se pudo actualizar el estado');
@@ -131,7 +153,7 @@ function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (
       <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
         <SelectValue placeholder="-- Selecciona --" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
         {ESTADOS.map(estado => (
           <SelectItem key={estado} value={estado}>
             {estado}
