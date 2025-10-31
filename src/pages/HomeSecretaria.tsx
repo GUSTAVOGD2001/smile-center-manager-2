@@ -10,7 +10,8 @@ import { toast } from 'sonner';
 import { Search, Eye, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
-import { actualizarDisenador } from '@/services/api';
+import { actualizarDisenador, actualizarEstadoOrden, obtenerOrdenesPorFecha } from '@/services/api';
+import type { OrdenResumen } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
 
@@ -33,10 +34,114 @@ interface OrderRow {
 
 const DISEÑADORES = ['ITZEL', 'ALAN', 'Pendiente'];
 const REPARTIDORES = ['Victor', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
+const ESTADOS = [
+  'Recepcion',
+  'Area de yeso',
+  'Diseño',
+  'Area de fresado',
+  'Ajuste',
+  'Terminado',
+  'Listo para recoger',
+  'Cancelado',
+  'Entregado',
+  'Entregado-Pendiente de pago',
+];
 
 // Note: Replace with environment variables in production
 const API_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
 const API_TOKEN = 'Tamarindo123456';
+
+const asString = (value: unknown) => (typeof value === 'string' && value.trim() !== '' ? value : undefined);
+
+function mapOrdenResumenToOrderRow(item: OrdenResumen): OrderRow {
+  const row: OrderRow = {
+    'ID Orden': item.id,
+    Timestamp: item.timestamp ?? '',
+    Estado: item.estado ?? '',
+  };
+
+  const designerKeys = ['Diseñadores', 'diseñadores', 'Disenador', 'disenador', 'diseñador'];
+  for (const key of designerKeys) {
+    const value = asString(item[key]);
+    if (value) {
+      row.Diseñadores = value;
+      break;
+    }
+  }
+
+  const repartidorKeys = ['Repartidores', 'repartidores', 'Repartidor', 'repartidor'];
+  for (const key of repartidorKeys) {
+    const value = asString(item[key]);
+    if (value) {
+      row.Repartidores = value;
+      break;
+    }
+  }
+
+  const extraMappings: [keyof OrderRow, string[]][] = [
+    ['Nombre', ['Nombre', 'nombre']],
+    ['Apellido', ['Apellido', 'apellido']],
+    ['Material', ['Material', 'material']],
+    ['Especificación', ['Especificación', 'especificacion', 'especificación']],
+    ['Fecha Requerida', ['Fecha Requerida', 'fechaRequerida']],
+    ['Recibo', ['Recibo', 'recibo']],
+    ['ReciboURL', ['ReciboURL', 'reciboUrl', 'reciboURL']],
+    ['Tipo de trabajo', ['Tipo de trabajo', 'tipoDeTrabajo', 'tipoTrabajo']],
+  ];
+
+  for (const [target, keys] of extraMappings) {
+    for (const key of keys) {
+      const value = asString(item[key]);
+      if (value) {
+        row[target] = value;
+        break;
+      }
+    }
+  }
+
+  return row;
+}
+
+function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (patch: OrderRow) => void }) {
+  const [saving, setSaving] = useState(false);
+
+  async function onChangeEstado(nuevo: string) {
+    const orderId = orden['ID Orden'];
+    if (!orderId) return;
+
+    const prevEstado = orden.Estado ?? '';
+    if (nuevo === prevEstado) return;
+    const nextOrden = { ...orden, Estado: nuevo };
+    onChange(nextOrden);
+    setSaving(true);
+
+    try {
+      await actualizarEstadoOrden({ id: orderId, nuevoEstado: nuevo });
+      toast.success(`Estado actualizado (${orderId})`);
+    } catch (error: any) {
+      onChange({ ...orden, Estado: prevEstado });
+      toast.error(error?.message || 'No se pudo actualizar el estado');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Select value={orden.Estado || ''} onValueChange={onChangeEstado} disabled={saving}>
+      <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+        <SelectValue placeholder="-- Selecciona --" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">-- Selecciona --</SelectItem>
+        {ESTADOS.map(estado => (
+          <SelectItem key={estado} value={estado}>
+            {estado}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 const HomeSecretaria = () => {
   const { currentUser, changePassword } = useAuth();
@@ -44,6 +149,9 @@ const HomeSecretaria = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
+  const [isSearchingByDate, setIsSearchingByDate] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -81,6 +189,59 @@ const HomeSecretaria = () => {
     }
   };
 
+  const actualizarFila = (ordenActualizada: OrderRow) => {
+    const orderId = ordenActualizada['ID Orden'];
+    if (!orderId) return;
+
+    setSearchResults(prev =>
+      prev.map(item => (item['ID Orden'] === orderId ? { ...item, ...ordenActualizada } : item))
+    );
+
+    setOrders(prev => {
+      const exists = prev.some(item => item['ID Orden'] === orderId);
+      if (exists) {
+        return prev.map(item => (item['ID Orden'] === orderId ? { ...item, ...ordenActualizada } : item));
+      }
+      return [...prev, ordenActualizada];
+    });
+
+    setSelectedOrder(prev =>
+      prev && prev['ID Orden'] === orderId ? { ...prev, ...ordenActualizada } : prev
+    );
+  };
+
+  const buscarPorFecha = async () => {
+    if (!searchDate) {
+      toast.error('Selecciona una fecha');
+      return;
+    }
+
+    setIsSearchingByDate(true);
+    try {
+      const items = await obtenerOrdenesPorFecha(searchDate);
+      const mapped = items.map(mapOrdenResumenToOrderRow);
+      setSearchResults(mapped);
+      setHasSearched(true);
+      setSelectedOrder(null);
+      setOrders(prev => {
+        const current = new Map(prev.map(item => [item['ID Orden'], item]));
+        mapped.forEach(item => {
+          const id = item['ID Orden'];
+          if (id) {
+            const existing = current.get(id) ?? {};
+            current.set(id, { ...existing, ...item });
+          }
+        });
+        return Array.from(current.values());
+      });
+      toast.success(`Se encontraron ${mapped.length} órdenes`);
+    } catch (error: any) {
+      toast.error(error?.message || 'No se pudo obtener la lista');
+    } finally {
+      setIsSearchingByDate(false);
+    }
+  };
+
   const handleSearch = () => {
     if (!searchTerm.trim()) {
       toast.error('Ingrese un ID de orden para buscar');
@@ -93,11 +254,13 @@ const HomeSecretaria = () => {
       const orderNumber = formattedSearchTerm.padStart(4, '0');
       formattedSearchTerm = `ORD-${orderNumber}`;
     }
-    
-    const results = orders.filter(order => 
+
+    const results = orders.filter(order =>
       order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
     );
     setSearchResults(results);
+    setHasSearched(true);
+    setSelectedOrder(null);
     if (results.length === 0) {
       toast.info('No se encontraron órdenes');
     }
@@ -197,46 +360,6 @@ const HomeSecretaria = () => {
     }
   };
 
-  const handleUpdateStatus = async (order: OrderRow, newStatus: string) => {
-    setIsLoading(true);
-    try {
-      const UPDATE_URL = `${API_URL}?token=${API_TOKEN}`;
-      const response = await fetch(UPDATE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: order['ID Orden'],
-          estado: newStatus,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        toast.success('Estado actualizado correctamente');
-        
-        // Log the change
-        console.log({
-          user: currentUser?.username,
-          orderId: order['ID Orden'],
-          field: 'Estado',
-          oldValue: order.Estado,
-          newValue: newStatus,
-          timestamp: new Date().toISOString()
-        });
-        
-        await fetchOrders();
-        handleSearch();
-      } else {
-        toast.error('Error al actualizar el estado');
-      }
-    } catch (error) {
-      toast.error('Error al actualizar el estado');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const showDetails = (order: OrderRow) => {
     setSelectedOrder(order);
     setIsDetailsOpen(true);
@@ -288,7 +411,33 @@ const HomeSecretaria = () => {
           </CardContent>
         </Card>
 
-        {searchResults.length > 0 && (
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Buscar por Fecha</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium">Fecha</Label>
+                <Input
+                  type="date"
+                  className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+                  value={searchDate}
+                  onChange={(e) => setSearchDate(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={buscarPorFecha}
+                className="gap-2"
+                disabled={isSearchingByDate || !searchDate}
+              >
+                {isSearchingByDate ? 'Buscando...' : 'Buscar por fecha'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {hasSearched && (
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
             <CardHeader>
               <CardTitle>Resultados de Búsqueda</CardTitle>
@@ -309,36 +458,18 @@ const HomeSecretaria = () => {
                   </thead>
                   <tbody>
                     {searchResults.map((order, idx) => (
-                      <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                      <tr key={order['ID Orden'] ?? idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
                         <td className="p-3">{order['ID Orden']}</td>
-                        <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
+                        <td className="p-3">
+                          {order.Timestamp ? new Date(order.Timestamp).toLocaleString('es-ES') : ''}
+                        </td>
                         <td className="p-3">
                           <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
                             {order.Estado}
                           </span>
                         </td>
                         <td className="p-3">
-                          <Select
-                            defaultValue={order.Estado}
-                            onValueChange={(value) => handleUpdateStatus(order, value)}
-                            disabled={isLoading}
-                          >
-                            <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Recepcion">Recepcion</SelectItem>
-                              <SelectItem value="Area de yeso">Area de yeso</SelectItem>
-                              <SelectItem value="Diseño">Diseño</SelectItem>
-                              <SelectItem value="Area de fresado">Area de fresado</SelectItem>
-                              <SelectItem value="Ajuste">Ajuste</SelectItem>
-                              <SelectItem value="Terminado">Terminado</SelectItem>
-                              <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
-                              <SelectItem value="Cancelado">Cancelado</SelectItem>
-                              <SelectItem value="Entregado">Entregado</SelectItem>
-                              <SelectItem value="Entregado-Pendiente de pago">Entregado-Pendiente de pago</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <CeldaEstadoEditable orden={order} onChange={actualizarFila} />
                         </td>
                         <td className="p-3">
                           <Select
@@ -402,6 +533,13 @@ const HomeSecretaria = () => {
                         </td>
                       </tr>
                     ))}
+                    {searchResults.length === 0 && (
+                      <tr>
+                        <td className="p-6 text-center text-muted-foreground" colSpan={7}>
+                          Sin resultados
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
