@@ -1,7 +1,5 @@
-const GAS_BASE = import.meta.env.VITE_API_UPDATE_URL?.replace(/\/exec.*/, "/exec");
-
 export function buildReciboUrl(id: string, format: "a4" | "pos58" = "a4") {
-  const base = GAS_BASE || "https://script.google.com/macros/s/AKfyxxxx/exec";
+  const base = "https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec";
   const params = new URLSearchParams({ id, format });
   return `${base}?${params.toString()}`;
 }
