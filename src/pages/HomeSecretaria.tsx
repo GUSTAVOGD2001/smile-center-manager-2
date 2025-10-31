@@ -239,25 +239,36 @@ const HomeSecretaria = () => {
 
     setIsSearchingByDate(true);
     try {
-      const items = await obtenerOrdenesPorFecha(searchDate);
-      const mapped = items.map(mapOrdenResumenToOrderRow);
-      setSearchResults(mapped);
-      setHasSearched(true);
-      setSelectedOrder(null);
-      setOrders(prev => {
-        const current = new Map(prev.map(item => [item['ID Orden'], item]));
-        mapped.forEach(item => {
-          const id = item['ID Orden'];
-          if (id) {
-            const existing = current.get(id) ?? {};
-            current.set(id, { ...existing, ...item });
-          }
+      const searchUrl = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${searchDate}`;
+      const response = await fetch(searchUrl);
+      const data = await response.json();
+
+      if (data.ok && data.rows) {
+        const mapped = data.rows as OrderRow[];
+        setSearchResults(mapped);
+        setHasSearched(true);
+        setSelectedOrder(null);
+        setOrders(prev => {
+          const current = new Map(prev.map(item => [item['ID Orden'], item]));
+          mapped.forEach(item => {
+            const id = item['ID Orden'];
+            if (id) {
+              const existing = current.get(id) ?? {};
+              current.set(id, { ...existing, ...item });
+            }
+          });
+          return Array.from(current.values());
         });
-        return Array.from(current.values());
-      });
-      toast.success(`Se encontraron ${mapped.length} órdenes`);
+        toast.success(`Se encontraron ${mapped.length} órdenes`);
+      } else {
+        toast.error(data.message || 'No se encontraron órdenes para esa fecha');
+        setSearchResults([]);
+        setHasSearched(true);
+      }
     } catch (error: any) {
       toast.error(error?.message || 'No se pudo obtener la lista');
+      setSearchResults([]);
+      setHasSearched(true);
     } finally {
       setIsSearchingByDate(false);
     }
