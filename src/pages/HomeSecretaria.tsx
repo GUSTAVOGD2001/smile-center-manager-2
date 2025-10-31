@@ -6,8 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Search, Eye, FileText } from 'lucide-react';
+import { Search, Eye, FileText, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
 import { actualizarDisenador, obtenerOrdenesPorFecha } from '@/services/api';
@@ -178,6 +182,8 @@ const HomeSecretaria = () => {
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -193,6 +199,10 @@ const HomeSecretaria = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    filterOrdersByDate();
+  }, [orders, selectedDate]);
+
   const fetchOrders = async () => {
     try {
       const GET_URL = `${API_URL}?token=${API_TOKEN}`;
@@ -200,21 +210,32 @@ const HomeSecretaria = () => {
       const data = await response.json();
 
       const sourceRows = Array.isArray(data?.rows) ? (data.rows as OrderRow[]) : [];
-
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-
-      const filteredRows = sourceRows.filter((order: OrderRow) => {
-        const orderDate = new Date(order.Timestamp);
-        return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-      });
-
-      setOrders(filteredRows);
+      setOrders(sourceRows);
     } catch (error) {
       toast.error('Error al cargar las órdenes');
       console.error(error);
     }
+  };
+
+  const filterOrdersByDate = () => {
+    if (!selectedDate) {
+      setFilteredOrders([]);
+      return;
+    }
+
+    const filtered = orders.filter(order => {
+      if (!order.Timestamp) return false;
+      const orderDate = new Date(order.Timestamp);
+      return (
+        orderDate.getFullYear() === selectedDate.getFullYear() &&
+        orderDate.getMonth() === selectedDate.getMonth() &&
+        orderDate.getDate() === selectedDate.getDate()
+      );
+    });
+
+    setFilteredOrders(filtered);
+    setSearchResults(filtered);
+    setHasSearched(true);
   };
 
   const actualizarFila = (ordenActualizada: OrderRow) => {
@@ -387,7 +408,7 @@ const HomeSecretaria = () => {
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
-            <CardTitle>Buscar Orden</CardTitle>
+            <CardTitle>Buscar Orden por ID</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3">
@@ -405,6 +426,58 @@ const HomeSecretaria = () => {
                 Buscar
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Buscar por Fecha</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium mb-2 block">Seleccionar Fecha</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Selecciona una fecha</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedDate(undefined);
+                  setFilteredOrders([]);
+                  setSearchResults([]);
+                  setHasSearched(false);
+                }}
+              >
+                Limpiar Filtro
+              </Button>
+            </div>
+            {selectedDate && (
+              <p className="text-sm text-muted-foreground mt-3">
+                Mostrando {filteredOrders.length} órdenes para {format(selectedDate, "PPP")}
+              </p>
+            )}
           </CardContent>
         </Card>
 
