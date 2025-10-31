@@ -239,7 +239,11 @@ const HomeSecretaria = () => {
 
     setIsSearchingByDate(true);
     try {
-      const searchUrl = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${searchDate}`;
+      // Convert YYYY-MM-DD to DD/MM/YYYY format to match Timestamp format
+      const [year, month, day] = searchDate.split('-');
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      const searchUrl = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${formattedDate}`;
       const response = await fetch(searchUrl);
       const data = await response.json();
 
@@ -259,7 +263,7 @@ const HomeSecretaria = () => {
           });
           return Array.from(current.values());
         });
-        toast.success(`Se encontraron ${mapped.length} órdenes`);
+        toast.success(`Se encontraron ${mapped.length} órdenes para ${formattedDate}`);
       } else {
         toast.error(data.message || 'No se encontraron órdenes para esa fecha');
         setSearchResults([]);
