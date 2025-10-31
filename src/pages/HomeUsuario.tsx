@@ -82,25 +82,43 @@ const HomeUsuario = () => {
   };
 
   const handleUpdateStatus = async (order: OrderRow, newStatus: string) => {
+    const orderId = order['ID Orden'];
     setIsLoading(true);
+    
     try {
-      const UPDATE_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
-      const response = await fetch(UPDATE_URL, {
+      const requestBody = {
+        token: 'Tamarindo123456',
+        action: 'update',
+        keyColumn: 'ID Orden',
+        keyValue: orderId,
+        newStatus: newStatus,
+      };
+
+      const response = await fetch('https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: order['ID Orden'],
-          estado: newStatus,
-        }),
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
-      if (data.success) {
+      const result = await response.json();
+
+      if (result.ok) {
         toast.success('Estado actualizado correctamente');
-        await fetchOrders();
-        handleSearch();
+        // Update local state
+        setSearchResults(prev =>
+          prev.map(o =>
+            o['ID Orden'] === orderId ? { ...o, Estado: newStatus } : o
+          )
+        );
+        setOrders(prev =>
+          prev.map(o =>
+            o['ID Orden'] === orderId ? { ...o, Estado: newStatus } : o
+          )
+        );
       } else {
-        toast.error('Error al actualizar el estado');
+        toast.error(result.message || 'Error al actualizar el estado');
       }
     } catch (error) {
       toast.error('Error al actualizar el estado');
@@ -181,7 +199,7 @@ const HomeUsuario = () => {
                           <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
                             <SelectItem value="Recepcion">Recepcion</SelectItem>
                             <SelectItem value="Area de yeso">Area de yeso</SelectItem>
                             <SelectItem value="Diseño">Diseño</SelectItem>
