@@ -177,8 +177,6 @@ const HomeSecretaria = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchDate, setSearchDate] = useState('');
-  const [isSearchingByDate, setIsSearchingByDate] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -240,36 +238,6 @@ const HomeSecretaria = () => {
     );
   };
 
-  const buscarPorFecha = async () => {
-    if (!searchDate) {
-      toast.error('Selecciona una fecha');
-      return;
-    }
-    setIsSearchingByDate(true);
-    try {
-      const formattedDate = toDMY(searchDate);
-      const url = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${encodeURIComponent(formattedDate)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data?.ok && Array.isArray(data.rows)) {
-        setSearchResults(data.rows as OrderRow[]);
-        setHasSearched(true);
-        setSelectedOrder(null);
-        toast.success(`Se encontraron ${data.rows.length} órdenes para ${formattedDate}`);
-      } else {
-        setSearchResults([]);
-        setHasSearched(true);
-        toast.error(data?.message || 'No se encontraron órdenes para esa fecha');
-      }
-    } catch (error: any) {
-      setSearchResults([]);
-      setHasSearched(true);
-      toast.error(error?.message || 'Error al buscar órdenes');
-    } finally {
-      setIsSearchingByDate(false);
-    }
-  };
 
   const handleSearch = () => {
     if (!searchTerm.trim()) {
@@ -440,31 +408,6 @@ const HomeSecretaria = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle>Buscar por Fecha</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col">
-                <Label className="text-sm font-medium">Fecha</Label>
-                <Input
-                  type="date"
-                  className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
-                  value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
-                />
-              </div>
-              <Button
-                onClick={buscarPorFecha}
-                className="gap-2"
-                disabled={isSearchingByDate || !searchDate}
-              >
-                {isSearchingByDate ? 'Buscando...' : 'Buscar por fecha'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {hasSearched && (
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
