@@ -53,6 +53,13 @@ const API_TOKEN = 'Tamarindo123456';
 
 const asString = (value: unknown) => (typeof value === 'string' && value.trim() !== '' ? value : undefined);
 
+function toDMY(input: string): string {
+  if (!input) return '';
+  const [y, m, d] = input.split('-');
+  const pad = (v: string) => v.padStart(2, '0');
+  return `${pad(d)}/${pad(m)}/${y}`;
+}
+
 function mapOrdenResumenToOrderRow(item: OrdenResumen): OrderRow {
   const row: OrderRow = {
     'ID Orden': item.id,
@@ -193,16 +200,18 @@ const HomeSecretaria = () => {
       const GET_URL = `${API_URL}?token=${API_TOKEN}`;
       const response = await fetch(GET_URL);
       const data = await response.json();
-      
+
+      const sourceRows = Array.isArray(data?.rows) ? (data.rows as OrderRow[]) : [];
+
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
-      
-      const filteredRows = (data.rows || []).filter((order: OrderRow) => {
+
+      const filteredRows = sourceRows.filter((order: OrderRow) => {
         const orderDate = new Date(order.Timestamp);
         return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
       });
-      
+
       setOrders(filteredRows);
     } catch (error) {
       toast.error('Error al cargar las órdenes');
@@ -236,43 +245,27 @@ const HomeSecretaria = () => {
       toast.error('Selecciona una fecha');
       return;
     }
-
     setIsSearchingByDate(true);
     try {
-      // Convert YYYY-MM-DD to DD/MM/YYYY format to match Timestamp format
-      const [year, month, day] = searchDate.split('-');
-      const formattedDate = `${day}/${month}/${year}`;
-      
-      const searchUrl = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${formattedDate}`;
-      const response = await fetch(searchUrl);
-      const data = await response.json();
+      const formattedDate = toDMY(searchDate);
+      const url = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${encodeURIComponent(formattedDate)}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-      if (data.ok && data.rows) {
-        const mapped = data.rows as OrderRow[];
-        setSearchResults(mapped);
+      if (data?.ok && Array.isArray(data.rows)) {
+        setSearchResults(data.rows as OrderRow[]);
         setHasSearched(true);
         setSelectedOrder(null);
-        setOrders(prev => {
-          const current = new Map(prev.map(item => [item['ID Orden'], item]));
-          mapped.forEach(item => {
-            const id = item['ID Orden'];
-            if (id) {
-              const existing = current.get(id) ?? {};
-              current.set(id, { ...existing, ...item });
-            }
-          });
-          return Array.from(current.values());
-        });
-        toast.success(`Se encontraron ${mapped.length} órdenes para ${formattedDate}`);
+        toast.success(`Se encontraron ${data.rows.length} órdenes para ${formattedDate}`);
       } else {
-        toast.error(data.message || 'No se encontraron órdenes para esa fecha');
         setSearchResults([]);
         setHasSearched(true);
+        toast.error(data?.message || 'No se encontraron órdenes para esa fecha');
       }
     } catch (error: any) {
-      toast.error(error?.message || 'No se pudo obtener la lista');
       setSearchResults([]);
       setHasSearched(true);
+      toast.error(error?.message || 'No se pudo obtener la lista');
     } finally {
       setIsSearchingByDate(false);
     }
