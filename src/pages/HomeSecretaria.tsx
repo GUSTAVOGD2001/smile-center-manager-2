@@ -247,43 +247,25 @@ const HomeSecretaria = () => {
     }
     setIsSearchingByDate(true);
     try {
-      // Obtener todas las órdenes
-      const GET_URL = `${API_URL}?token=${API_TOKEN}`;
-      const response = await fetch(GET_URL);
-      const data = await response.json();
+      const formattedDate = toDMY(searchDate);
+      const url = `${API_URL}?token=${API_TOKEN}&action=listByDate&date=${encodeURIComponent(formattedDate)}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
       if (data?.ok && Array.isArray(data.rows)) {
-        const allOrders = data.rows as OrderRow[];
-        
-        // Convertir la fecha seleccionada a objeto Date (solo fecha, sin hora)
-        const [year, month, day] = searchDate.split('-').map(Number);
-        const selectedDate = new Date(year, month - 1, day);
-        
-        // Filtrar órdenes que coincidan con la fecha seleccionada
-        const filteredOrders = allOrders.filter((order: OrderRow) => {
-          if (!order.Timestamp) return false;
-          const orderDate = new Date(order.Timestamp);
-          return (
-            orderDate.getFullYear() === selectedDate.getFullYear() &&
-            orderDate.getMonth() === selectedDate.getMonth() &&
-            orderDate.getDate() === selectedDate.getDate()
-          );
-        });
-
-        setSearchResults(filteredOrders);
+        setSearchResults(data.rows as OrderRow[]);
         setHasSearched(true);
         setSelectedOrder(null);
-        const formattedDate = toDMY(searchDate);
-        toast.success(`Se encontraron ${filteredOrders.length} órdenes para ${formattedDate}`);
+        toast.success(`Se encontraron ${data.rows.length} órdenes para ${formattedDate}`);
       } else {
         setSearchResults([]);
         setHasSearched(true);
-        toast.error('No se pudieron obtener las órdenes');
+        toast.error(data?.message || 'No se encontraron órdenes para esa fecha');
       }
     } catch (error: any) {
       setSearchResults([]);
       setHasSearched(true);
-      toast.error(error?.message || 'No se pudo obtener la lista');
+      toast.error(error?.message || 'Error al buscar órdenes');
     } finally {
       setIsSearchingByDate(false);
     }
