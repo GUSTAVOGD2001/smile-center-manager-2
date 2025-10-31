@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import { Search, Eye, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
+import { actualizarDisenador } from '@/services/api';
+import type { Orden } from '@/types/orden';
+import { buildReciboUrl } from '@/lib/urls';
 
 interface OrderRow {
   'ID Orden': string;
@@ -44,6 +47,7 @@ const HomeSecretaria = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [savingDesignerId, setSavingDesignerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser?.requirePasswordChange) {
@@ -100,6 +104,55 @@ const HomeSecretaria = () => {
   };
 
   const handleUpdateField = async (order: OrderRow, field: 'Diseñadores' | 'Repartidores', newValue: string) => {
+    if (field === 'Diseñadores') {
+      const orderId = order['ID Orden'];
+      if (!orderId) {
+        toast.error('Orden sin ID');
+        return;
+      }
+
+      const prevValue = order.Diseñadores ?? '';
+      const applyDesignerUpdate = (list: OrderRow[], value: string) =>
+        list.map(item =>
+          item['ID Orden'] === orderId
+            ? {
+                ...item,
+                Diseñadores: value,
+              }
+            : item
+        );
+
+      const nextOrden: Orden = {
+        id: orderId,
+        disenador: newValue,
+      };
+
+      setSavingDesignerId(orderId);
+      setOrders(prev => applyDesignerUpdate(prev, newValue));
+      setSearchResults(prev => applyDesignerUpdate(prev, newValue));
+      setSelectedOrder(prev =>
+        prev && prev['ID Orden'] === orderId ? { ...prev, Diseñadores: newValue } : prev
+      );
+
+      try {
+        const result = await actualizarDisenador({
+          id: nextOrden.id,
+          disenador: nextOrden.disenador ?? '',
+        });
+        toast.success(`Diseñador actualizado para ${result.id}`);
+      } catch (error: any) {
+        setOrders(prev => applyDesignerUpdate(prev, prevValue));
+        setSearchResults(prev => applyDesignerUpdate(prev, prevValue));
+        setSelectedOrder(prev =>
+          prev && prev['ID Orden'] === orderId ? { ...prev, Diseñadores: prevValue } : prev
+        );
+        toast.error(error?.message || 'No se pudo actualizar el diseñador');
+      } finally {
+        setSavingDesignerId(null);
+      }
+      return;
+    }
+
     setIsLoading(true);
     try {
       const payload = {
@@ -120,7 +173,7 @@ const HomeSecretaria = () => {
       const data = await response.json();
       if (data.success) {
         toast.success(`${field} actualizado correctamente`);
-        
+
         // Log the change
         console.log({
           user: currentUser?.username,
@@ -130,7 +183,7 @@ const HomeSecretaria = () => {
           newValue,
           timestamp: new Date().toISOString()
         });
-        
+
         await fetchOrders();
         handleSearch();
       } else {
@@ -289,9 +342,9 @@ const HomeSecretaria = () => {
                         </td>
                         <td className="p-3">
                           <Select
-                            defaultValue={order.Diseñadores || 'Pendiente'}
+                            value={order.Diseñadores || 'Pendiente'}
                             onValueChange={(value) => handleUpdateField(order, 'Diseñadores', value)}
-                            disabled={isLoading}
+                            disabled={isLoading || savingDesignerId === order['ID Orden']}
                           >
                             <SelectTrigger className="w-[150px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
                               <SelectValue />
@@ -302,6 +355,9 @@ const HomeSecretaria = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          {savingDesignerId === order['ID Orden'] && (
+                            <p className="text-xs text-muted-foreground mt-1">Guardando…</p>
+                          )}
                         </td>
                         <td className="p-3">
                           <Select
@@ -334,7 +390,7 @@ const HomeSecretaria = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${order['ID Orden']}&format=a4`;
+                                const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
                                 window.open(receiptUrl, '_blank');
                               }}
                               className="gap-2"
@@ -425,7 +481,7 @@ const HomeSecretaria = () => {
                 <div className="mt-4">
                   <Button
                     onClick={() => {
-                      const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${selectedOrder['ID Orden']}&format=a4`;
+                      const receiptUrl = buildReciboUrl(selectedOrder['ID Orden'], 'a4');
                       window.open(receiptUrl, '_blank');
                     }}
                     className="w-full gap-2"

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Search, Eye, FileText } from 'lucide-react';
+import { buildReciboUrl } from '@/lib/urls';
 
 interface OrderRow {
   'ID Orden': string;
@@ -209,7 +210,7 @@ const HomeUsuario = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${order['ID Orden']}&format=a4`;
+                              const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
                               window.open(receiptUrl, '_blank');
                             }}
                             className="gap-2"
@@ -285,18 +286,18 @@ const HomeUsuario = () => {
                   </div>
                 </div>
               </div>
-              <div className="mt-4">
-                <Button
-                  onClick={() => {
-                    const receiptUrl = `https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec?id=${selectedOrder['ID Orden']}&format=a4`;
-                    window.open(receiptUrl, '_blank');
-                  }}
-                  className="w-full gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  Ver Recibo
-                </Button>
-              </div>
+            <div className="mt-4">
+              <Button
+                onClick={() => {
+                  const receiptUrl = buildReciboUrl(selectedOrder['ID Orden'], 'a4');
+                  window.open(receiptUrl, '_blank');
+                }}
+                className="w-full gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                Ver Recibo
+              </Button>
+            </div>
             </div>
           )}
         </DialogContent>
