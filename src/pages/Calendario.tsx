@@ -416,31 +416,6 @@ const Calendario = () => {
         </AlertDialog>
       </div>
 
-      {/* Year Calendar Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {monthNames.map((monthName, monthIndex) => (
-          <Card key={monthIndex} className="glass-card border-[rgba(255,255,255,0.1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-center">{monthName}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground mb-2 text-center">
-                <div>D</div>
-                <div>L</div>
-                <div>M</div>
-                <div>M</div>
-                <div>J</div>
-                <div>V</div>
-                <div>S</div>
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {renderMonth(monthIndex)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Legend */}
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
@@ -519,6 +494,31 @@ const Calendario = () => {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Year Calendar Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {monthNames.map((monthName, monthIndex) => (
+          <Card key={monthIndex} className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-center">{monthName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground mb-2 text-center">
+                <div>D</div>
+                <div>L</div>
+                <div>M</div>
+                <div>M</div>
+                <div>J</div>
+                <div>V</div>
+                <div>S</div>
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {renderMonth(monthIndex)}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
