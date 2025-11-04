@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, DollarSign, Wallet, FileText } from 'lucide-react';
+import { CalendarIcon, DollarSign, Wallet, FileText, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -274,7 +274,7 @@ const ModificarEstados = () => {
       </Card>
 
       {/* Tarjetas de suma */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Costos</CardTitle>
@@ -294,6 +294,17 @@ const ModificarEstados = () => {
           <CardContent>
             <div className="text-3xl font-bold">
               ${filteredOrders.reduce((sum, order) => sum + (parseFloat(order['A Cuenta'] || '0')), 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Piezas Dentales</CardTitle>
+            <Layers className="h-5 w-5 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {filteredOrders.reduce((sum, order) => sum + (parseInt(order['Piezas Dentales'] || '0')), 0)}
             </div>
           </CardContent>
         </Card>
