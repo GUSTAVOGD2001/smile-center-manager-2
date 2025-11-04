@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -21,7 +22,11 @@ interface Event {
 const Calendario = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEventListOpen, setIsEventListOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -63,17 +68,61 @@ const Calendario = () => {
     return new Date(year, month, 1).getDay();
   };
 
-  const hasEvent = (day: number, month: number) => {
+  const getEventsForDay = (day: number, month: number) => {
     const dateStr = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.find(event => event.date === dateStr);
+    return events.filter(event => event.date === dateStr);
+  };
+
+  const hasEvent = (day: number, month: number) => {
+    const dayEvents = getEventsForDay(day, month);
+    return dayEvents.length > 0 ? dayEvents[0] : null;
   };
 
   const handleDayClick = (day: number, month: number) => {
     const date = new Date(currentYear, month, day);
     setSelectedDate(date);
     const dateStr = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    setFormData({ ...formData, date: dateStr });
+    const dayEvents = getEventsForDay(day, month);
+    
+    if (dayEvents.length > 0) {
+      setSelectedDayEvents(dayEvents);
+      setIsEventListOpen(true);
+    } else {
+      setFormData({ title: '', date: dateStr, is_important: false, notes: '' });
+      setEditingEventId(null);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setFormData({
+      title: event.title,
+      date: event.date,
+      is_important: event.is_important,
+      notes: event.notes || '',
+    });
+    setEditingEventId(event.id);
+    setIsEventListOpen(false);
     setIsDialogOpen(true);
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!deletingEventId) return;
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', deletingEventId);
+
+    if (error) {
+      toast.error('Error al eliminar evento');
+      console.error(error);
+    } else {
+      toast.success('Evento eliminado exitosamente');
+      setDeletingEventId(null);
+      fetchEvents();
+      setIsEventListOpen(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,23 +133,46 @@ const Calendario = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('events')
-      .insert([{
-        title: formData.title,
-        date: formData.date,
-        is_important: formData.is_important,
-        notes: formData.notes || null,
-      }]);
+    if (editingEventId) {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: formData.title,
+          date: formData.date,
+          is_important: formData.is_important,
+          notes: formData.notes || null,
+        })
+        .eq('id', editingEventId);
 
-    if (error) {
-      toast.error('Error al crear evento');
-      console.error(error);
+      if (error) {
+        toast.error('Error al actualizar evento');
+        console.error(error);
+      } else {
+        toast.success('Evento actualizado exitosamente');
+        setIsDialogOpen(false);
+        setFormData({ title: '', date: '', is_important: false, notes: '' });
+        setEditingEventId(null);
+        fetchEvents();
+      }
     } else {
-      toast.success('Evento creado exitosamente');
-      setIsDialogOpen(false);
-      setFormData({ title: '', date: '', is_important: false, notes: '' });
-      fetchEvents();
+      const { error } = await supabase
+        .from('events')
+        .insert([{
+          title: formData.title,
+          date: formData.date,
+          is_important: formData.is_important,
+          notes: formData.notes || null,
+        }]);
+
+      if (error) {
+        toast.error('Error al crear evento');
+        console.error(error);
+      } else {
+        toast.success('Evento creado exitosamente');
+        setIsDialogOpen(false);
+        setFormData({ title: '', date: '', is_important: false, notes: '' });
+        fetchEvents();
+      }
     }
   };
 
@@ -164,7 +236,7 @@ const Calendario = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nuevo Evento</DialogTitle>
+              <DialogTitle>{editingEventId ? 'Editar Evento' : 'Nuevo Evento'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -215,16 +287,101 @@ const Calendario = () => {
               </div>
 
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsDialogOpen(false);
+                  setEditingEventId(null);
+                  setFormData({ title: '', date: '', is_important: false, notes: '' });
+                }}>
                   Cancelar
                 </Button>
                 <Button type="submit">
-                  Guardar Evento
+                  {editingEventId ? 'Actualizar Evento' : 'Guardar Evento'}
                 </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Event List Dialog */}
+        <Dialog open={isEventListOpen} onOpenChange={setIsEventListOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Eventos del día</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {selectedDayEvents.map((event) => (
+                <Card key={event.id} className="glass-card border-[rgba(255,255,255,0.1)]">
+                  <CardContent className="pt-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold">{event.title}</h3>
+                          {event.is_important && (
+                            <AlertCircle size={16} className="text-destructive" />
+                          )}
+                        </div>
+                        {event.notes && (
+                          <p className="text-sm text-muted-foreground">{event.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleEditEvent(event)}
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setDeletingEventId(event.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Button
+                className="w-full gap-2"
+                onClick={() => {
+                  setIsEventListOpen(false);
+                  setFormData({ 
+                    title: '', 
+                    date: selectedDayEvents[0]?.date || '', 
+                    is_important: false, 
+                    notes: '' 
+                  });
+                  setEditingEventId(null);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus size={18} />
+                Añadir otro evento
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingEventId} onOpenChange={() => setDeletingEventId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar evento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. El evento será eliminado permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteEvent}>
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Year Calendar Grid */}
