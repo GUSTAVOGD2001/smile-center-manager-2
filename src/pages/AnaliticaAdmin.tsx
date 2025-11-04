@@ -77,18 +77,40 @@ const AnaliticaAdmin = () => {
     return sum + units;
   }, 0);
 
-  // Calculate units by designer
-  const designerUnits = orders.reduce((acc: { [key: string]: number }, order) => {
-    const designer = order['Diseñadores'] || 'Sin asignar';
+  // Calculate units by designer and date
+  const dateUnitsMap: { [date: string]: { itzel: number; alan: number } } = {};
+  
+  orders.forEach(order => {
+    const date = new Date(order['Timestamp']).toLocaleDateString('es-MX', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
+    const designer = (order['Diseñadores'] || '').toUpperCase();
     const units = parseInt(order['Piezas Dentales'] as string) || 0;
-    acc[designer] = (acc[designer] || 0) + units;
-    return acc;
-  }, {});
+    
+    if (!dateUnitsMap[date]) {
+      dateUnitsMap[date] = { itzel: 0, alan: 0 };
+    }
+    
+    if (designer === 'ITZEL') {
+      dateUnitsMap[date].itzel += units;
+    } else if (designer === 'ALAN') {
+      dateUnitsMap[date].alan += units;
+    }
+  });
 
-  const designerChartData = Object.entries(designerUnits).map(([name, value]) => ({
-    name,
-    units: value,
-  })).sort((a, b) => b.units - a.units);
+  const designerChartData = Object.entries(dateUnitsMap)
+    .map(([date, units]) => ({
+      fecha: date,
+      Itzel: units.itzel,
+      Alan: units.alan,
+    }))
+    .sort((a, b) => {
+      const [dayA, monthA, yearA] = a.fecha.split('/');
+      const [dayB, monthB, yearB] = b.fecha.split('/');
+      return new Date(`${yearA}-${monthA}-${dayA}`).getTime() - new Date(`${yearB}-${monthB}-${dayB}`).getTime();
+    });
 
   if (isLoading) {
     return (
@@ -165,20 +187,24 @@ const AnaliticaAdmin = () => {
       {/* Designer Line Chart */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
-          <CardTitle>Unidades Fresadas por Diseñador</CardTitle>
+          <CardTitle>Unidades Fresadas por Diseñador por Fecha</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={designerChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
-                dataKey="name" 
+                dataKey="fecha" 
                 stroke="hsl(var(--muted-foreground))"
-                style={{ fontSize: '12px' }}
+                style={{ fontSize: '11px' }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
               />
               <YAxis 
                 stroke="hsl(var(--muted-foreground))"
                 style={{ fontSize: '12px' }}
+                label={{ value: 'Unidades', angle: -90, position: 'insideLeft', style: { fill: 'hsl(var(--muted-foreground))' } }}
               />
               <Tooltip
                 contentStyle={{
@@ -190,12 +216,19 @@ const AnaliticaAdmin = () => {
               <Legend />
               <Line 
                 type="monotone" 
-                dataKey="units" 
-                stroke="hsl(var(--primary))" 
+                dataKey="Itzel" 
+                stroke="#22c55e" 
                 strokeWidth={2}
-                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                dot={{ fill: '#22c55e', r: 4 }}
                 activeDot={{ r: 6 }}
-                name="Unidades"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Alan" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6', r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
