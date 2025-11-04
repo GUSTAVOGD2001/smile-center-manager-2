@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { Plus, AlertCircle, Pencil, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface Event {
   id: string;
@@ -27,6 +29,7 @@ const Calendario = () => {
   const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -34,8 +37,8 @@ const Calendario = () => {
     notes: '',
   });
 
-  const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
+  const today = new Date();
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -68,8 +71,16 @@ const Calendario = () => {
     return new Date(year, month, 1).getDay();
   };
 
+  const upcomingEvents = useMemo(() => {
+    const todayStr = format(today, 'yyyy-MM-dd');
+    return events
+      .filter(event => event.date >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 10);
+  }, [events]);
+
   const getEventsForDay = (day: number, month: number) => {
-    const dateStr = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return events.filter(event => event.date === dateStr);
   };
 
@@ -79,9 +90,9 @@ const Calendario = () => {
   };
 
   const handleDayClick = (day: number, month: number) => {
-    const date = new Date(currentYear, month, day);
+    const date = new Date(selectedYear, month, day);
     setSelectedDate(date);
-    const dateStr = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayEvents = getEventsForDay(day, month);
     
     if (dayEvents.length > 0) {
@@ -177,10 +188,11 @@ const Calendario = () => {
   };
 
   const renderMonth = (monthIndex: number) => {
-    const daysInMonth = getDaysInMonth(monthIndex, currentYear);
-    const firstDay = getFirstDayOfMonth(monthIndex, currentYear);
+    const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
+    const firstDay = getFirstDayOfMonth(monthIndex, selectedYear);
     const days = [];
-    const isPastMonth = monthIndex < currentMonth;
+    const isPastMonth = selectedYear < today.getFullYear() || 
+                        (selectedYear === today.getFullYear() && monthIndex < currentMonth);
 
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
@@ -190,7 +202,8 @@ const Calendario = () => {
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const event = hasEvent(day, monthIndex);
-      const isPastDay = isPastMonth || (monthIndex === currentMonth && day < new Date().getDate());
+      const isPastDay = isPastMonth || 
+                        (selectedYear === today.getFullYear() && monthIndex === currentMonth && day < today.getDate());
       
       days.push(
         <button
@@ -219,11 +232,30 @@ const Calendario = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Calendario {currentYear}
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Calendario
+            </h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSelectedYear(selectedYear - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-2xl font-semibold min-w-[80px] text-center">{selectedYear}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSelectedYear(selectedYear + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           <p className="text-muted-foreground mt-2">Gestiona eventos y fechas importantes</p>
         </div>
 
@@ -409,26 +441,85 @@ const Calendario = () => {
         ))}
       </div>
 
-      {/* Legend */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle className="text-lg">Leyenda</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-muted" />
-            <span className="text-sm">Sin evento</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-primary" />
-            <span className="text-sm">Evento normal</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-destructive" />
-            <span className="text-sm">Evento importante</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Legend */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle className="text-lg">Leyenda</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-muted" />
+              <span className="text-sm">Sin evento</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary" />
+              <span className="text-sm">Evento normal</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-destructive" />
+              <span className="text-sm">Evento importante</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Events */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)] lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              Próximos Eventos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {upcomingEvents.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No hay eventos próximos</p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold">{event.title}</h4>
+                        {event.is_important && (
+                          <AlertCircle size={14} className="text-destructive" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(event.date), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                      </p>
+                      {event.notes && (
+                        <p className="text-xs text-muted-foreground mt-1">{event.notes}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleEditEvent(event)}
+                      >
+                        <Pencil size={14} />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => setDeletingEventId(event.id)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
