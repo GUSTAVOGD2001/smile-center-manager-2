@@ -18,6 +18,8 @@ interface Event {
   title: string;
   date: string;
   is_important: boolean;
+  is_recurring: boolean;
+  recurring_day: number | null;
   notes: string | null;
 }
 
@@ -34,6 +36,8 @@ const Calendario = () => {
     title: '',
     date: '',
     is_important: false,
+    is_recurring: false,
+    recurring_day: 1,
     notes: '',
   });
 
@@ -99,7 +103,7 @@ const Calendario = () => {
       setSelectedDayEvents(dayEvents);
       setIsEventListOpen(true);
     } else {
-      setFormData({ title: '', date: dateStr, is_important: false, notes: '' });
+      setFormData({ title: '', date: dateStr, is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
       setEditingEventId(null);
       setIsDialogOpen(true);
     }
@@ -110,6 +114,8 @@ const Calendario = () => {
       title: event.title,
       date: event.date,
       is_important: event.is_important,
+      is_recurring: event.is_recurring,
+      recurring_day: event.recurring_day || 1,
       notes: event.notes || '',
     });
     setEditingEventId(event.id);
@@ -139,8 +145,18 @@ const Calendario = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.date) {
-      toast.error('Por favor completa los campos requeridos');
+    if (!formData.title) {
+      toast.error('Por favor completa el título');
+      return;
+    }
+
+    if (formData.is_recurring && !formData.recurring_day) {
+      toast.error('Por favor selecciona el día del mes');
+      return;
+    }
+
+    if (!formData.is_recurring && !formData.date) {
+      toast.error('Por favor selecciona una fecha');
       return;
     }
 
@@ -151,6 +167,8 @@ const Calendario = () => {
           title: formData.title,
           date: formData.date,
           is_important: formData.is_important,
+          is_recurring: formData.is_recurring,
+          recurring_day: formData.is_recurring ? formData.recurring_day : null,
           notes: formData.notes || null,
         })
         .eq('id', editingEventId);
@@ -161,28 +179,64 @@ const Calendario = () => {
       } else {
         toast.success('Evento actualizado exitosamente');
         setIsDialogOpen(false);
-        setFormData({ title: '', date: '', is_important: false, notes: '' });
+        setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
         setEditingEventId(null);
         fetchEvents();
       }
     } else {
-      const { error } = await supabase
-        .from('events')
-        .insert([{
-          title: formData.title,
-          date: formData.date,
-          is_important: formData.is_important,
-          notes: formData.notes || null,
-        }]);
+      // Si es recurrente, crear eventos para todos los meses del año
+      if (formData.is_recurring) {
+        const eventsToInsert = [];
+        for (let month = 0; month < 12; month++) {
+          const daysInMonth = getDaysInMonth(month, selectedYear);
+          // Solo crear el evento si el día existe en ese mes
+          if (formData.recurring_day <= daysInMonth) {
+            const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(formData.recurring_day).padStart(2, '0')}`;
+            eventsToInsert.push({
+              title: formData.title,
+              date: dateStr,
+              is_important: formData.is_important,
+              is_recurring: true,
+              recurring_day: formData.recurring_day,
+              notes: formData.notes || null,
+            });
+          }
+        }
 
-      if (error) {
-        toast.error('Error al crear evento');
-        console.error(error);
+        const { error } = await supabase
+          .from('events')
+          .insert(eventsToInsert);
+
+        if (error) {
+          toast.error('Error al crear eventos recurrentes');
+          console.error(error);
+        } else {
+          toast.success(`${eventsToInsert.length} eventos recurrentes creados exitosamente`);
+          setIsDialogOpen(false);
+          setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
+          fetchEvents();
+        }
       } else {
-        toast.success('Evento creado exitosamente');
-        setIsDialogOpen(false);
-        setFormData({ title: '', date: '', is_important: false, notes: '' });
-        fetchEvents();
+        const { error } = await supabase
+          .from('events')
+          .insert([{
+            title: formData.title,
+            date: formData.date,
+            is_important: formData.is_important,
+            is_recurring: false,
+            recurring_day: null,
+            notes: formData.notes || null,
+          }]);
+
+        if (error) {
+          toast.error('Error al crear evento');
+          console.error(error);
+        } else {
+          toast.success('Evento creado exitosamente');
+          setIsDialogOpen(false);
+          setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
+          fetchEvents();
+        }
       }
     }
   };
@@ -215,9 +269,11 @@ const Calendario = () => {
             ${isPastDay 
               ? 'bg-muted/30 text-muted-foreground/50' 
               : event 
-                ? event.is_important 
-                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                ? event.is_recurring
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : event.is_important 
+                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }
           `}
@@ -282,16 +338,48 @@ const Calendario = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="date">Fecha *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={formData.is_recurring}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, is_recurring: checked as boolean })
+                  }
                 />
+                <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
+                  Evento recurrente (se repite cada mes)
+                </Label>
               </div>
+
+              {formData.is_recurring ? (
+                <div>
+                  <Label htmlFor="recurring_day">Día del mes *</Label>
+                  <Input
+                    id="recurring_day"
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formData.recurring_day}
+                    onChange={(e) => setFormData({ ...formData, recurring_day: parseInt(e.target.value) })}
+                    placeholder="Día del mes (1-31)"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    El evento se creará en todos los meses del año {selectedYear} en el día {formData.recurring_day}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="date">Fecha *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -322,7 +410,7 @@ const Calendario = () => {
                 <Button type="button" variant="outline" onClick={() => {
                   setIsDialogOpen(false);
                   setEditingEventId(null);
-                  setFormData({ title: '', date: '', is_important: false, notes: '' });
+                  setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
                 }}>
                   Cancelar
                 </Button>
@@ -383,7 +471,9 @@ const Calendario = () => {
                   setFormData({ 
                     title: '', 
                     date: selectedDayEvents[0]?.date || '', 
-                    is_important: false, 
+                    is_important: false,
+                    is_recurring: false,
+                    recurring_day: 1,
                     notes: '' 
                   });
                   setEditingEventId(null);
@@ -430,6 +520,10 @@ const Calendario = () => {
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary" />
               <span className="text-sm">Evento normal</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-blue-500" />
+              <span className="text-sm">Evento recurrente</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-destructive" />

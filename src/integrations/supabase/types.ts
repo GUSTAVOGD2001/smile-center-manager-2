@@ -20,7 +20,9 @@ export type Database = {
           date: string
           id: string
           is_important: boolean
+          is_recurring: boolean
           notes: string | null
+          recurring_day: number | null
           title: string
           updated_at: string
         }
@@ -29,7 +31,9 @@ export type Database = {
           date: string
           id?: string
           is_important?: boolean
+          is_recurring?: boolean
           notes?: string | null
+          recurring_day?: number | null
           title: string
           updated_at?: string
         }
@@ -38,7 +42,9 @@ export type Database = {
           date?: string
           id?: string
           is_important?: boolean
+          is_recurring?: boolean
           notes?: string | null
+          recurring_day?: number | null
           title?: string
           updated_at?: string
         }
