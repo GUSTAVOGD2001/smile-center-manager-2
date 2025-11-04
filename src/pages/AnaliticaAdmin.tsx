@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -127,6 +128,35 @@ const AnaliticaAdmin = () => {
       const [dayB, monthB, yearB] = b.fecha.split('/');
       return new Date(`${yearA}-${monthA}-${dayA}`).getTime() - new Date(`${yearB}-${monthB}-${dayB}`).getTime();
     });
+
+  // Calculate top 7 clients by number of orders
+  const clientsMap: { [client: string]: { orders: number; spent: number; pieces: number } } = {};
+  
+  orders.forEach(order => {
+    const nombre = order['Nombre'] || '';
+    const apellido = order['Apellido'] || '';
+    const clientName = `${nombre} ${apellido}`.trim() || 'Sin nombre';
+    const costo = parseFloat(order['Costo'] || '0');
+    const piezas = parseInt(order['Piezas Dentales'] || '0');
+    
+    if (!clientsMap[clientName]) {
+      clientsMap[clientName] = { orders: 0, spent: 0, pieces: 0 };
+    }
+    
+    clientsMap[clientName].orders += 1;
+    clientsMap[clientName].spent += costo;
+    clientsMap[clientName].pieces += piezas;
+  });
+
+  const topClients = Object.entries(clientsMap)
+    .map(([name, data]) => ({
+      name,
+      orders: data.orders,
+      spent: data.spent,
+      pieces: data.pieces,
+    }))
+    .sort((a, b) => b.orders - a.orders)
+    .slice(0, 7);
 
   if (isLoading) {
     return (
@@ -317,6 +347,39 @@ const AnaliticaAdmin = () => {
               />
             </LineChart>
           </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Top 7 Clients Table */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Top 7 Clientes por Número de Órdenes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-semibold">Cliente</TableHead>
+                  <TableHead className="text-right font-semibold">Órdenes</TableHead>
+                  <TableHead className="text-right font-semibold">Total Gastado</TableHead>
+                  <TableHead className="text-right font-semibold">Piezas Dentales</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {topClients.map((client, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="font-medium">{client.name}</TableCell>
+                    <TableCell className="text-right">{client.orders}</TableCell>
+                    <TableCell className="text-right">
+                      ${client.spent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-right">{client.pieces}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
