@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface OrderRow {
@@ -16,6 +22,8 @@ const AnaliticaAdmin = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkType, setSelectedWorkType] = useState<string>('todos');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchOrders();
@@ -67,10 +75,18 @@ const AnaliticaAdmin = () => {
 
   const averageUnits = orders.length > 0 ? (totalUnits / orders.length).toFixed(2) : '0';
 
-  // Calculate units by work type
-  const filteredOrders = selectedWorkType === 'todos' 
-    ? orders 
-    : orders.filter(order => order['Tipo de Trabajo'] === selectedWorkType);
+  // Calculate units by work type and date range
+  const filteredOrders = orders.filter(order => {
+    const matchesWorkType = selectedWorkType === 'todos' || order['Tipo de Trabajo'] === selectedWorkType;
+    
+    if (!startDate && !endDate) return matchesWorkType;
+    
+    const orderDate = new Date(order['Timestamp']);
+    const matchesStartDate = !startDate || orderDate >= startDate;
+    const matchesEndDate = !endDate || orderDate <= endDate;
+    
+    return matchesWorkType && matchesStartDate && matchesEndDate;
+  });
 
   const filteredTotalUnits = filteredOrders.reduce((sum, order) => {
     const units = parseInt(order['Piezas Dentales'] as string) || 0;
@@ -151,23 +167,92 @@ const AnaliticaAdmin = () => {
             </div>
           </div>
 
-          {/* Filter by Work Type */}
+          {/* Filters */}
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-semibold">Filtrar por Tipo de Trabajo:</label>
-              <Select value={selectedWorkType} onValueChange={setSelectedWorkType}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Seleccionar tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  {chartData.map((item) => (
-                    <SelectItem key={item.name} value={item.name}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold">Tipo de Trabajo:</label>
+                <Select value={selectedWorkType} onValueChange={setSelectedWorkType}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    {chartData.map((item) => (
+                      <SelectItem key={item.name} value={item.name}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold">Fecha Inicio:</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "Seleccionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold">Fecha Fin:</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : "Seleccionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                  }}
+                  className="text-sm"
+                >
+                  Limpiar fechas
+                </Button>
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
