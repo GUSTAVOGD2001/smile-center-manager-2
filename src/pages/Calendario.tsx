@@ -133,7 +133,7 @@ const Calendario = () => {
                 ? event.is_important 
                   ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
                   : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-destructive/80 text-destructive-foreground hover:bg-destructive'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }
           `}
         >
@@ -259,8 +259,8 @@ const Calendario = () => {
         </CardHeader>
         <CardContent className="flex gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-destructive" />
-            <span className="text-sm">Sin evento / Pasado</span>
+            <div className="w-6 h-6 rounded-full bg-muted" />
+            <span className="text-sm">Sin evento</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-primary" />
