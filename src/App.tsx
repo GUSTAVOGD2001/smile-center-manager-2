@@ -14,6 +14,7 @@ import Finanzas from "./pages/Finanzas";
 import Ingresos from "./pages/Ingresos";
 import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
+import Analitica from "./pages/Analitica";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "@/contexts/AuthContext";

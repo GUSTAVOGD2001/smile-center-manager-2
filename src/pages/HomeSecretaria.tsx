@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Search, Eye, FileText, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,6 +19,7 @@ import { actualizarDisenador, obtenerOrdenesPorFecha } from '@/services/api';
 import type { OrdenResumen } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
+import Analitica from './Analitica';
 
 interface OrderRow {
   'ID Orden': string;
@@ -398,13 +400,21 @@ const HomeSecretaria = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
-            <p className="text-muted-foreground">Busque una orden por ID para ver y modificar Diseñadores/Repartidores</p>
+            <h1 className="text-3xl font-bold mb-2">Panel de Secretaria</h1>
+            <p className="text-muted-foreground">Gestión de órdenes y analítica</p>
           </div>
           <Badge variant="secondary" className="text-lg px-4 py-2">
             Rol: Secretaria
           </Badge>
         </div>
+
+        <Tabs defaultValue="home" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="home">Home</TabsTrigger>
+            <TabsTrigger value="analitica">Analítica</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="home" className="space-y-6 mt-6">
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
@@ -677,6 +687,12 @@ const HomeSecretaria = () => {
             )}
           </DialogContent>
         </Dialog>
+        </TabsContent>
+
+        <TabsContent value="analitica" className="mt-6">
+          <Analitica />
+        </TabsContent>
+      </Tabs>
       </div>
     </>
   );
