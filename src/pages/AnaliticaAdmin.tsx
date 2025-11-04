@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 interface OrderRow {
@@ -14,6 +15,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'
 const AnaliticaAdmin = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedWorkType, setSelectedWorkType] = useState<string>('todos');
 
   useEffect(() => {
     fetchOrders();
@@ -65,6 +67,29 @@ const AnaliticaAdmin = () => {
 
   const averageUnits = orders.length > 0 ? (totalUnits / orders.length).toFixed(2) : '0';
 
+  // Calculate units by work type
+  const filteredOrders = selectedWorkType === 'todos' 
+    ? orders 
+    : orders.filter(order => order['Tipo de Trabajo'] === selectedWorkType);
+
+  const filteredTotalUnits = filteredOrders.reduce((sum, order) => {
+    const units = parseInt(order['Piezas Dentales'] as string) || 0;
+    return sum + units;
+  }, 0);
+
+  // Calculate units by designer
+  const designerUnits = orders.reduce((acc: { [key: string]: number }, order) => {
+    const designer = order['Diseñadores'] || 'Sin asignar';
+    const units = parseInt(order['Piezas Dentales'] as string) || 0;
+    acc[designer] = (acc[designer] || 0) + units;
+    return acc;
+  }, {});
+
+  const designerChartData = Object.entries(designerUnits).map(([name, value]) => ({
+    name,
+    units: value,
+  })).sort((a, b) => b.units - a.units);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -82,6 +107,100 @@ const AnaliticaAdmin = () => {
         <h1 className="text-3xl font-bold mb-2">Analítica</h1>
         <p className="text-muted-foreground">Análisis de tipos de trabajo</p>
       </div>
+
+      {/* Units Summary - First */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Resumen de Piezas Dentales</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="text-center p-4 bg-secondary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Total de Órdenes</p>
+              <p className="text-3xl font-bold">{orders.length}</p>
+            </div>
+            <div className="text-center p-4 bg-secondary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Total de Piezas</p>
+              <p className="text-3xl font-bold">{totalUnits}</p>
+            </div>
+            <div className="text-center p-4 bg-secondary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Promedio por Orden</p>
+              <p className="text-3xl font-bold">{averageUnits}</p>
+            </div>
+          </div>
+
+          {/* Filter by Work Type */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-semibold">Filtrar por Tipo de Trabajo:</label>
+              <Select value={selectedWorkType} onValueChange={setSelectedWorkType}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {chartData.map((item) => (
+                    <SelectItem key={item.name} value={item.name}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-primary/10 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Órdenes del Tipo Seleccionado</p>
+                <p className="text-3xl font-bold">{filteredOrders.length}</p>
+              </div>
+              <div className="text-center p-4 bg-primary/10 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Piezas del Tipo Seleccionado</p>
+                <p className="text-3xl font-bold">{filteredTotalUnits}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Designer Line Chart */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Unidades Fresadas por Diseñador</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={designerChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis 
+                dataKey="name" 
+                stroke="hsl(var(--muted-foreground))"
+                style={{ fontSize: '12px' }}
+              />
+              <YAxis 
+                stroke="hsl(var(--muted-foreground))"
+                style={{ fontSize: '12px' }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="units" 
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Unidades"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Pie Chart */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
@@ -217,28 +336,6 @@ const AnaliticaAdmin = () => {
         </CardContent>
       </Card>
 
-      {/* Units Summary */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Resumen de Piezas Dentales</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-secondary/20 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">Total de Órdenes</p>
-              <p className="text-3xl font-bold">{orders.length}</p>
-            </div>
-            <div className="text-center p-4 bg-secondary/20 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">Total de Piezas</p>
-              <p className="text-3xl font-bold">{totalUnits}</p>
-            </div>
-            <div className="text-center p-4 bg-secondary/20 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">Promedio por Orden</p>
-              <p className="text-3xl font-bold">{averageUnits}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
