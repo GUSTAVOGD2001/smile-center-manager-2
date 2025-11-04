@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, CheckCircle, Truck, AlertCircle, Smile, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
+import AnaliticaAdmin from './AnaliticaAdmin';
 
 interface OrderRow {
   'ID Orden': string;
@@ -107,101 +109,112 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Vista general de órdenes</p>
-        </div>
-        <Button
-          onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Añadir Orden
-        </Button>
-      </div>
+    <Tabs defaultValue="home" className="space-y-6">
+      <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsTrigger value="home">Home</TabsTrigger>
+        <TabsTrigger value="analitica">Analítica</TabsTrigger>
+      </TabsList>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.title} className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{kpi.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Chart */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Órdenes por Día (Últimos 7 días)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="date" stroke="#888" />
-              <YAxis stroke="#888" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                }}
-              />
-              <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Recent Orders Table */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Últimas 20 Órdenes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[rgba(255,255,255,0.1)]">
-                  <th className="text-left p-3 font-semibold">ID Orden</th>
-                  <th className="text-left p-3 font-semibold">Fecha Requerida</th>
-                  <th className="text-left p-3 font-semibold">Timestamp</th>
-                  <th className="text-left p-3 font-semibold">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latest20Orders.map((order, idx) => {
-                  const timestampValue = order.Timestamp || order['Fecha de Registro'] || order.created_at;
-                  const requiredDate =
-                    order['Fecha Requerida'] || order.fecha_requerida || order.requiredDate;
-
-                  return (
-                    <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
-                      <td className="p-3">{order['ID Orden']}</td>
-                      <td className="p-3">{formatDateValue(requiredDate)}</td>
-                      <td className="p-3">{formatDateValue(timestampValue)}</td>
-                      <td className="p-3">
-                        <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                          {order.Estado}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      <TabsContent value="home" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">Vista general de órdenes</p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Button
+            onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Añadir Orden
+          </Button>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {kpiCards.map((kpi) => (
+            <Card key={kpi.title} className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
+                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{kpi.value}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Órdenes por Día (Últimos 7 días)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="date" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders Table */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Últimas 20 Órdenes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                    <th className="text-left p-3 font-semibold">ID Orden</th>
+                    <th className="text-left p-3 font-semibold">Fecha Requerida</th>
+                    <th className="text-left p-3 font-semibold">Timestamp</th>
+                    <th className="text-left p-3 font-semibold">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latest20Orders.map((order, idx) => {
+                    const timestampValue = order.Timestamp || order['Fecha de Registro'] || order.created_at;
+                    const requiredDate =
+                      order['Fecha Requerida'] || order.fecha_requerida || order.requiredDate;
+
+                    return (
+                      <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                        <td className="p-3">{order['ID Orden']}</td>
+                        <td className="p-3">{formatDateValue(requiredDate)}</td>
+                        <td className="p-3">{formatDateValue(timestampValue)}</td>
+                        <td className="p-3">
+                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                            {order.Estado}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="analitica">
+        <AnaliticaAdmin />
+      </TabsContent>
+    </Tabs>
   );
 };
 
