@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import AuthGuard from "@/components/AuthGuard";
 import DashboardLayout from "@/components/DashboardLayout";
 import Home from "./pages/Home";
+import Calendario from "./pages/Calendario";
 import ModificarEstados from "./pages/ModificarEstados";
 import Configuracion from "./pages/Configuracion";
 import Inventario from "./pages/Inventario";
@@ -77,6 +78,18 @@ const App = () => (
                   <AdminRoute>
                     <DashboardLayout>
                       <Home />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/calendario"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Calendario />
                     </DashboardLayout>
                   </AdminRoute>
                 </AuthGuard>
