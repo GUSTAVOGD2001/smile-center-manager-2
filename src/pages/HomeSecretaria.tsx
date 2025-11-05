@@ -447,49 +447,60 @@ const HomeSecretaria = () => {
                   <thead>
                     <tr className="border-b border-[rgba(255,255,255,0.1)]">
                       <th className="text-left p-3 font-semibold">ID Orden</th>
-                      <th className="text-left p-3 font-semibold">Timestamp</th>
+                      <th className="text-left p-3 font-semibold">Fecha de registro</th>
                       <th className="text-left p-3 font-semibold">Estado</th>
                       <th className="text-left p-3 font-semibold">Nombre</th>
                       <th className="text-left p-3 font-semibold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {todayOrders.map((order) => (
-                      <tr key={order['ID Orden']} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
-                        <td className="p-3 font-medium">{order['ID Orden']}</td>
-                        <td className="p-3">{order.Timestamp}</td>
-                        <td className="p-3">
-                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                            {order.Estado}
-                          </span>
-                        </td>
-                        <td className="p-3">{order.Nombre || '-'}</td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => showDetails(order)}
-                              className="gap-2"
-                            >
-                              <Eye size={16} />
-                              Ver
-                            </Button>
-                            {order.Recibo && (
+                    {todayOrders.map((order) => {
+                      const formatDateOnly = (timestamp?: string) => {
+                        if (!timestamp) return '-';
+                        const date = new Date(timestamp);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        return `${day}/${month}/${year}`;
+                      };
+
+                      return (
+                        <tr key={order['ID Orden']} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                          <td className="p-3 font-medium">{order['ID Orden']}</td>
+                          <td className="p-3">{formatDateOnly(order.Timestamp)}</td>
+                          <td className="p-3">
+                            <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                              {order.Estado}
+                            </span>
+                          </td>
+                          <td className="p-3">{order.Nombre || '-'}</td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => window.open(buildReciboUrl(order.Recibo!, 'a4'), '_blank')}
+                                onClick={() => showDetails(order)}
                                 className="gap-2"
                               >
-                                <FileText size={16} />
-                                Recibo
+                                <Eye size={16} />
+                                Ver
                               </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {order.Recibo && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(buildReciboUrl(order.Recibo!, 'a4'), '_blank')}
+                                  className="gap-2"
+                                >
+                                  <FileText size={16} />
+                                  Recibo
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
