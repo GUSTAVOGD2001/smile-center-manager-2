@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Search, Eye, FileText, CalendarIcon } from 'lucide-react';
+import { Search, Eye, FileText, CalendarIcon, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -188,6 +188,7 @@ const HomeSecretaria = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [savingDesignerId, setSavingDesignerId] = useState<string | null>(null);
+  const [todayOrders, setTodayOrders] = useState<OrderRow[]>([]);
 
   useEffect(() => {
     if (currentUser?.requirePasswordChange) {
@@ -202,6 +203,10 @@ const HomeSecretaria = () => {
   useEffect(() => {
     filterOrdersByDate();
   }, [orders, selectedDate]);
+
+  useEffect(() => {
+    filterTodayOrders();
+  }, [orders]);
 
   const fetchOrders = async () => {
     try {
@@ -236,6 +241,20 @@ const HomeSecretaria = () => {
     setFilteredOrders(filtered);
     setSearchResults(filtered);
     setHasSearched(true);
+  };
+
+  const filterTodayOrders = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filtered = orders.filter(order => {
+      if (!order.Timestamp) return false;
+      const orderDate = new Date(order.Timestamp);
+      orderDate.setHours(0, 0, 0, 0);
+      return orderDate.getTime() === today.getTime();
+    });
+
+    setTodayOrders(filtered);
   };
 
   const actualizarFila = (ordenActualizada: OrderRow) => {
@@ -401,10 +420,82 @@ const HomeSecretaria = () => {
             <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
             <p className="text-muted-foreground">Busque una orden por ID para ver y modificar Diseñadores/Repartidores</p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            Rol: Secretaria
-          </Badge>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+              className="gap-2"
+            >
+              <Plus size={18} />
+              Añadir Orden
+            </Button>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              Rol: Secretaria
+            </Badge>
+          </div>
         </div>
+
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Órdenes de Hoy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todayOrders.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No hay órdenes nuevas para hoy</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                      <th className="text-left p-3 font-semibold">ID Orden</th>
+                      <th className="text-left p-3 font-semibold">Timestamp</th>
+                      <th className="text-left p-3 font-semibold">Estado</th>
+                      <th className="text-left p-3 font-semibold">Nombre</th>
+                      <th className="text-left p-3 font-semibold">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayOrders.map((order) => (
+                      <tr key={order['ID Orden']} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                        <td className="p-3 font-medium">{order['ID Orden']}</td>
+                        <td className="p-3">{order.Timestamp}</td>
+                        <td className="p-3">
+                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                            {order.Estado}
+                          </span>
+                        </td>
+                        <td className="p-3">{order.Nombre || '-'}</td>
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => showDetails(order)}
+                              className="gap-2"
+                            >
+                              <Eye size={16} />
+                              Ver
+                            </Button>
+                            {order.Recibo && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open(buildReciboUrl(order.Recibo!, 'a4'), '_blank')}
+                                className="gap-2"
+                              >
+                                <FileText size={16} />
+                                Recibo
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
