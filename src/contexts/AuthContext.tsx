@@ -42,7 +42,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [users, setUsers] = useState<User[]>(() => {
     const savedUsers = localStorage.getItem('smileUsers');
-    return savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
+    if (savedUsers) {
+      const parsed = JSON.parse(savedUsers);
+      // Sincronizar nuevos usuarios de DEFAULT_USERS que no existan
+      const existingUsernames = parsed.map((u: User) => u.username);
+      const newUsers = DEFAULT_USERS.filter(du => !existingUsernames.includes(du.username));
+      return [...parsed, ...newUsers];
+    }
+    return DEFAULT_USERS;
   });
 
   useEffect(() => {
