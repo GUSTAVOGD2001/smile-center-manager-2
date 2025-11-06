@@ -371,7 +371,7 @@ const HomeSecretaria = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.ok) {
         toast.success(`${field} actualizado correctamente`);
 
         // Log the change
@@ -387,7 +387,7 @@ const HomeSecretaria = () => {
         await fetchOrders();
         handleSearch();
       } else {
-        toast.error(`Error al actualizar ${field}`);
+        toast.error(data.message || `Error al actualizar ${field}`);
       }
     } catch (error) {
       toast.error(`Error al actualizar ${field}`);

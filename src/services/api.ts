@@ -31,8 +31,14 @@ export async function actualizarDisenador(params: { id: string; disenador: strin
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, disenador }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ 
+      token: 'Tamarindo123456',
+      action: 'update',
+      keyColumn: 'ID Orden',
+      keyValue: id,
+      newDisenador: disenador
+    }),
   });
 
   ensureJsonOk(res);
