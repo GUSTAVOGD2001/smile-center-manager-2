@@ -27,6 +27,7 @@ const DEFAULT_USERS: User[] = [
   { username: 'SMILEADMIN', password: 'Karla12345', role: 'admin' },
   { username: 'Usuario1', password: '1234', role: 'user' },
   { username: 'SecretariaSmile', password: 'Vani123', role: 'secretaria', requirePasswordChange: true },
+  { username: 'Vania', password: '12345', role: 'secretaria' },
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
