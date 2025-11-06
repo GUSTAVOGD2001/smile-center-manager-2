@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface User {
   username: string;
   password: string;
-  role: 'admin' | 'user' | 'secretaria';
+  role: 'admin' | 'user' | 'auxiliar';
   requirePasswordChange?: boolean;
 }
 
@@ -17,7 +17,7 @@ interface AuthContextType {
   updateUser: (username: string, updatedUser: User) => void;
   deleteUser: (username: string) => void;
   isAdmin: () => boolean;
-  isSecretaria: () => boolean;
+  isAuxiliar: () => boolean;
   changePassword: (newPassword: string) => void;
 }
 
@@ -26,8 +26,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEFAULT_USERS: User[] = [
   { username: 'SMILEADMIN', password: 'Karla12345', role: 'admin' },
   { username: 'Usuario1', password: '1234', role: 'user' },
-  { username: 'SecretariaSmile', password: 'Vani123', role: 'secretaria', requirePasswordChange: true },
-  { username: 'Vania', password: '12345', role: 'secretaria' },
+  { username: 'SecretariaSmile', password: 'Vani123', role: 'auxiliar', requirePasswordChange: true },
+  { username: 'Vania', password: '12345', role: 'auxiliar' },
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAdmin = () => currentUser?.role === 'admin';
   
-  const isSecretaria = () => currentUser?.role === 'secretaria';
+  const isAuxiliar = () => currentUser?.role === 'auxiliar';
 
   const changePassword = (newPassword: string) => {
     if (currentUser) {
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateUser,
       deleteUser,
       isAdmin,
-      isSecretaria,
+      isAuxiliar,
       changePassword
     }}>
       {children}

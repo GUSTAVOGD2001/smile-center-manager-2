@@ -23,8 +23,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAdmin, currentUser } = useAuth();
   
   if (!isAdmin()) {
-    if (currentUser?.role === 'secretaria') {
-      return <Navigate to="/home-secretaria" replace />;
+    if (currentUser?.role === 'auxiliar') {
+      return <Navigate to="/home-auxiliar" replace />;
     }
     return <Navigate to="/home-usuario" replace />;
   }
@@ -39,21 +39,21 @@ const UserRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/" replace />;
   }
   
-  if (currentUser?.role === 'secretaria') {
-    return <Navigate to="/home-secretaria" replace />;
+  if (currentUser?.role === 'auxiliar') {
+    return <Navigate to="/home-auxiliar" replace />;
   }
   
   return <>{children}</>;
 };
 
-const SecretariaRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin, isSecretaria } = useAuth();
+const AuxiliarRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, isAuxiliar } = useAuth();
   
   if (isAdmin()) {
     return <Navigate to="/" replace />;
   }
   
-  if (!isSecretaria()) {
+  if (!isAuxiliar()) {
     return <Navigate to="/home-usuario" replace />;
   }
   
@@ -166,14 +166,14 @@ const App = () => (
               }
             />
             <Route
-              path="/home-secretaria"
+              path="/home-auxiliar"
               element={
                 <AuthGuard>
-                  <SecretariaRoute>
+                  <AuxiliarRoute>
                     <DashboardLayout>
                       <HomeSecretaria />
                     </DashboardLayout>
-                  </SecretariaRoute>
+                  </AuxiliarRoute>
                 </AuthGuard>
               }
             />

@@ -429,7 +429,7 @@ const HomeSecretaria = () => {
               Añadir Orden
             </Button>
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              Rol: Secretaria
+              Rol: Auxiliar
             </Badge>
           </div>
         </div>
