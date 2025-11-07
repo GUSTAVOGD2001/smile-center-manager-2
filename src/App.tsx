@@ -15,6 +15,8 @@ import Finanzas from "./pages/Finanzas";
 import Ingresos from "./pages/Ingresos";
 import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
+import HomeDiseñadores from "./pages/HomeDiseñadores";
+import Evidencias from "./pages/Evidencias";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +59,13 @@ const AuxiliarRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/home-usuario" replace />;
   }
   
+  return <>{children}</>;
+};
+
+const DiseñadorRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isDiseñador } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isDiseñador()) return <Navigate to="/home-usuario" replace />;
   return <>{children}</>;
 };
 
@@ -174,6 +183,30 @@ const App = () => (
                       <HomeSecretaria />
                     </DashboardLayout>
                   </AuxiliarRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/home-diseñadores"
+              element={
+                <AuthGuard>
+                  <DiseñadorRoute>
+                    <DashboardLayout>
+                      <HomeDiseñadores />
+                    </DashboardLayout>
+                  </DiseñadorRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/evidencias"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Evidencias />
+                    </DashboardLayout>
+                  </AdminRoute>
                 </AuthGuard>
               }
             />

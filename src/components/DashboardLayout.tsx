@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { logout, isAdmin, isAuxiliar, currentUser } = useAuth();
+  const { logout, isAdmin, isAuxiliar, isDiseñador, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -24,6 +24,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/inventario', label: 'Inventario', icon: Package },
     { path: '/finanzas', label: 'Egresos', icon: ArrowDownCircle },
     { path: '/ingresos', label: 'Ingresos', icon: ArrowUpCircle },
+    { path: '/evidencias', label: 'Evidencias', icon: Package },
     { path: '/configuracion', label: 'Configuración', icon: Settings },
   ];
 
@@ -35,11 +36,22 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/home-auxiliar', label: 'Búsqueda de Órdenes', icon: Search },
   ];
 
-  const navItems = isAdmin() ? adminNavItems : isAuxiliar() ? auxiliarNavItems : userNavItems;
+  const diseñadoresNavItems = [
+    { path: '/home-diseñadores', label: 'Inicio', icon: Home },
+  ];
+
+  const navItems = isAdmin() 
+    ? adminNavItems 
+    : isAuxiliar() 
+    ? auxiliarNavItems 
+    : isDiseñador()
+    ? diseñadoresNavItems
+    : userNavItems;
   
   const getRoleLabel = () => {
     if (isAdmin()) return 'Administrador';
     if (isAuxiliar()) return 'Auxiliar';
+    if (isDiseñador()) return 'Diseñador';
     return 'Usuario';
   };
 

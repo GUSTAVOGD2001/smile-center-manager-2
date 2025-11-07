@@ -106,7 +106,7 @@ const Configuracion = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-role">Rol</Label>
-                <Select value={newUser.role} onValueChange={(value: 'admin' | 'user' | 'auxiliar') => setNewUser({ ...newUser, role: value })}>
+                <Select value={newUser.role} onValueChange={(value: 'admin' | 'user' | 'auxiliar' | 'diseñadores') => setNewUser({ ...newUser, role: value })}>
                   <SelectTrigger className="bg-secondary/50 border-[rgba(255,255,255,0.1)]">
                     <SelectValue />
                   </SelectTrigger>
@@ -114,6 +114,7 @@ const Configuracion = () => {
                     <SelectItem value="user">Usuario</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
                     <SelectItem value="auxiliar">Auxiliar</SelectItem>
+                    <SelectItem value="diseñadores">Diseñadores</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -149,9 +150,11 @@ const Configuracion = () => {
                           ? 'bg-primary/20 text-primary' 
                           : user.role === 'auxiliar'
                           ? 'bg-accent/20 text-accent'
+                          : user.role === 'diseñadores'
+                          ? 'bg-purple-500/20 text-purple-400'
                           : 'bg-secondary/20 text-secondary'
                       }`}>
-                        {user.role === 'admin' ? 'Administrador' : user.role === 'auxiliar' ? 'Auxiliar' : 'Usuario'}
+                        {user.role === 'admin' ? 'Administrador' : user.role === 'auxiliar' ? 'Auxiliar' : user.role === 'diseñadores' ? 'Diseñadores' : 'Usuario'}
                       </span>
                     </td>
                     <td className="p-3">
@@ -215,7 +218,7 @@ const Configuracion = () => {
                 <Label htmlFor="edit-role">Rol</Label>
                 <Select 
                   value={editingUser.role} 
-                  onValueChange={(value: 'admin' | 'user' | 'auxiliar') => setEditingUser({ ...editingUser, role: value })}
+                  onValueChange={(value: 'admin' | 'user' | 'auxiliar' | 'diseñadores') => setEditingUser({ ...editingUser, role: value })}
                 >
                   <SelectTrigger className="bg-secondary/50 border-[rgba(255,255,255,0.1)]">
                     <SelectValue />
@@ -224,6 +227,7 @@ const Configuracion = () => {
                     <SelectItem value="user">Usuario</SelectItem>
                     <SelectItem value="admin">Administrador</SelectItem>
                     <SelectItem value="auxiliar">Auxiliar</SelectItem>
+                    <SelectItem value="diseñadores">Diseñadores</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
