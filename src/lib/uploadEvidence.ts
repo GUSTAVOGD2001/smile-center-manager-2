@@ -11,16 +11,23 @@ type EvidencePayload = {
 
 export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: File[]) {
   const fd = new FormData();
-  fd.append('apiKey', payload.apiKey);
-  fd.append('action', payload.action);
-  fd.append('titulo', payload.titulo ?? '');
-  fd.append('tipo', payload.tipo ?? '');
-  fd.append('fecha', payload.fecha ?? '');
-  fd.append('nota', payload.nota ?? '');
-  files.forEach((file) => fd.append('files[]', file, file.name));
+  fd.set('apiKey', payload.apiKey);
+  fd.set('action', payload.action);
+  fd.set('titulo', payload.titulo ?? '');
+  fd.set('tipo', payload.tipo ?? '');
+  fd.set('fecha', payload.fecha ?? '');
+  fd.set('nota', payload.nota ?? '');
 
-  const resp = await fetch(WEBAPP_URL, { method: 'POST', body: fd });
-  if (!resp.ok) throw new Error('Upload failed');
+  for (const f of files) {
+    fd.append('files[]', f, f.name);
+  }
+
+  const resp = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    body: fd,
+  });
+
+  if (!resp.ok) throw new Error(`Upload failed: ${resp.status}`);
   return await resp.json();
 }
 
