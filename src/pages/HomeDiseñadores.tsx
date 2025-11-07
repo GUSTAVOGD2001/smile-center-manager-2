@@ -93,10 +93,12 @@ const HomeDiseñadores = () => {
       fd.append('fecha', fecha);
       fd.append('nota', nota);
 
-      if (files) {
-        Array.from(files).forEach(file => {
-          fd.append('files[]', file);
-        });
+      const filesInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const fileList = (filesInput?.files ?? files) || []; // usa tu referencia real
+
+      for (const f of Array.from(fileList as FileList | File[])) {
+        fd.append('files[]', f, f.name);
+        fd.append('file', f, f.name);
       }
 
       const response = await fetch(WEBAPP_URL, {
@@ -106,8 +108,12 @@ const HomeDiseñadores = () => {
 
       const data = await response.json();
 
+      if (data?.debug) {
+        console.log('DEBUG Evidencias:', data.debug);
+      }
+
       if (data.ok) {
-        const evidenciaId = data.idEvidencia || 'N/A';
+        const evidenciaId = data.id || data.idEvidencia || 'N/A';
         setStatusMessage(`Evidencia creada correctamente: ${evidenciaId}`);
         toast.success(`Evidencia ${evidenciaId} creada correctamente`);
         
@@ -259,6 +265,7 @@ const HomeDiseñadores = () => {
                   <Input
                     id="file-input"
                     type="file"
+                    name="files"
                     accept="image/*"
                     multiple
                     onChange={(e) => setFiles(e.target.files)}
