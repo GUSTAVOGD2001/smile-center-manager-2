@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Search, Upload, FileImage } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { uploadEvidenceWithFiles, uploadEvidenceWithUrls } from '@/lib/uploadEvidence';
 
 interface OrderRow {
   'ID Orden': string;
@@ -18,8 +19,6 @@ interface OrderRow {
   Apellido?: string;
   [key: string]: string | undefined;
 }
-
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6KUInjAX3XF62wQz1g-SSQ9fmq9cTAjXaThF0Tn-27EzjuKRY3Or2Wj9DwqqUcuGBCw/exec';
 
 const HomeDiseñadores = () => {
   const { currentUser } = useAuth();
@@ -85,28 +84,35 @@ const HomeDiseñadores = () => {
     setStatusMessage('Guardando…');
 
     try {
-      const fd = new FormData();
-      fd.append('action', 'evidencias.create');
-      fd.append('apiKey', 'Tamarindo123456');
-      fd.append('titulo', titulo);
-      fd.append('tipo', tipo);
-      fd.append('fecha', fecha);
-      fd.append('nota', nota);
+      const payload = {
+        apiKey: 'Tamarindo123456',
+        action: 'evidencias.create' as const,
+        titulo,
+        tipo,
+        fecha,
+        nota,
+      };
 
       const filesInput = document.getElementById('file-input') as HTMLInputElement | null;
-      const fileList = (filesInput?.files ?? files) || []; // usa tu referencia real
+      const pickedFiles = filesInput?.files
+        ? Array.from(filesInput.files)
+        : files
+        ? Array.from(files)
+        : [];
+      const pickedUrls: { url: string; fileName?: string; mimeType?: string }[] = [];
 
-      for (const f of Array.from(fileList as FileList | File[])) {
-        fd.append('files[]', f, f.name);
-        fd.append('file', f, f.name);
+      let data;
+      if (pickedFiles.length > 0) {
+        data = await uploadEvidenceWithFiles(payload, pickedFiles);
+      } else if (pickedUrls.length > 0) {
+        data = await uploadEvidenceWithUrls(payload, pickedUrls);
+      } else {
+        toast.error('Debes seleccionar al menos una foto o proporcionar una URL');
+        setStatusMessage('Debes seleccionar al menos una foto o proporcionar una URL.');
+        setIsSaving(false);
+        setTimeout(() => setStatusMessage(''), 5000);
+        return;
       }
-
-      const response = await fetch(WEBAPP_URL, {
-        method: 'POST',
-        body: fd,
-      });
-
-      const data = await response.json();
 
       if (data?.debug) {
         console.log('DEBUG Evidencias:', data.debug);
