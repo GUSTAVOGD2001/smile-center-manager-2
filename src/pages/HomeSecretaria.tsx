@@ -187,7 +187,6 @@ const HomeSecretaria = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [savingDesignerId, setSavingDesignerId] = useState<string | null>(null);
   const [todayOrders, setTodayOrders] = useState<OrderRow[]>([]);
 
   useEffect(() => {
@@ -327,7 +326,6 @@ const HomeSecretaria = () => {
         disenador: newValue,
       };
 
-      setSavingDesignerId(orderId);
       setOrders(prev => applyDesignerUpdate(prev, newValue));
       setSearchResults(prev => applyDesignerUpdate(prev, newValue));
       setSelectedOrder(prev =>
@@ -347,8 +345,6 @@ const HomeSecretaria = () => {
           prev && prev['ID Orden'] === orderId ? { ...prev, Diseñadores: prevValue } : prev
         );
         toast.error(error?.message || 'No se pudo actualizar el diseñador');
-      } finally {
-        setSavingDesignerId(null);
       }
       return;
     }
@@ -622,7 +618,7 @@ const HomeSecretaria = () => {
                           <Select
                             value={order.Diseñadores || 'Pendiente'}
                             onValueChange={(value) => handleUpdateField(order, 'Diseñadores', value)}
-                            disabled={isLoading || savingDesignerId === order['ID Orden']}
+                            disabled={isLoading}
                           >
                             <SelectTrigger className="w-[150px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
                               <SelectValue />
@@ -633,9 +629,6 @@ const HomeSecretaria = () => {
                               ))}
                             </SelectContent>
                           </Select>
-                          {savingDesignerId === order['ID Orden'] && (
-                            <p className="text-xs text-muted-foreground mt-1">Guardando…</p>
-                          )}
                         </td>
                         <td className="p-3">
                           <Select

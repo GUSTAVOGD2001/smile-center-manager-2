@@ -37,7 +37,7 @@ export async function actualizarDisenador(params: { id: string; disenador: strin
       action: 'update',
       keyColumn: 'ID Orden',
       keyValue: id,
-      newDisenador: disenador
+      newDesigner: disenador
     }),
   });
 
