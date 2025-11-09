@@ -14,42 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      events: {
-        Row: {
-          created_at: string
-          date: string
-          id: string
-          is_important: boolean
-          is_recurring: boolean
-          notes: string | null
-          recurring_day: number | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          id?: string
-          is_important?: boolean
-          is_recurring?: boolean
-          notes?: string | null
-          recurring_day?: number | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          id?: string
-          is_important?: boolean
-          is_recurring?: boolean
-          notes?: string | null
-          recurring_day?: number | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

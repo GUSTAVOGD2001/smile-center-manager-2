@@ -1,3 +1,5 @@
+
+-- Migration: 20251104200313
 -- Create events table for calendar
 CREATE TABLE IF NOT EXISTS public.events (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -47,3 +49,13 @@ CREATE TRIGGER update_events_updated_at
 BEFORE UPDATE ON public.events
 FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Migration: 20251104220030
+-- Add recurring event fields to events table
+ALTER TABLE public.events
+ADD COLUMN is_recurring boolean NOT NULL DEFAULT false,
+ADD COLUMN recurring_day integer;
+
+-- Add check constraint for recurring_day to be between 1 and 31
+ALTER TABLE public.events
+ADD CONSTRAINT recurring_day_check CHECK (recurring_day IS NULL OR (recurring_day >= 1 AND recurring_day <= 31));
