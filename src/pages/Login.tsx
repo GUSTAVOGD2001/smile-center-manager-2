@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import smileCenterLogo from '@/assets/smile-center-logo.png';
+import spiralDevLogo from '@/assets/spiral-dev-logo.svg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -57,7 +58,7 @@ const Login = () => {
             <Input
               id="username"
               type="text"
-              placeholder="SMILEADMIN"
+              placeholder="Ingrese su usuario"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
@@ -87,9 +88,14 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>Usuario: SMILEADMIN</p>
-          <p>Contraseña: Karla12345</p>
+        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <span>Developed by</span>
+          <img 
+            src={spiralDevLogo} 
+            alt="Spiral Development Group" 
+            className="h-5 w-auto"
+          />
+          <span>Spiral Development Group</span>
         </div>
       </div>
     </div>
