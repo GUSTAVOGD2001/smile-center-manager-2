@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { PENDIENTES_API_URL, PENDIENTES_API_KEY } from '@/lib/urls';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Pendiente {
   id: string;
@@ -22,7 +23,11 @@ interface Pendiente {
 export default function Pendientes() {
   const [pendientes, setPendientes] = useState<Pendiente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPendiente, setEditingPendiente] = useState<Pendiente | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     nota: '',
@@ -93,6 +98,7 @@ export default function Pendientes() {
       return;
     }
 
+    setIsSaving(true);
     try {
       const response = await fetch(PENDIENTES_API_URL, {
         method: 'POST',
@@ -128,6 +134,113 @@ export default function Pendientes() {
       toast({
         title: 'Error',
         description: 'Error al crear pendiente',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEdit = (pendiente: Pendiente) => {
+    setEditingPendiente(pendiente);
+    setFormData({
+      titulo: pendiente.titulo,
+      nota: pendiente.nota,
+      fechaRequerida: pendiente.fechaRequerida
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.titulo.trim() || !editingPendiente) {
+      toast({
+        title: 'Error',
+        description: 'El título es obligatorio',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(PENDIENTES_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          apiKey: PENDIENTES_API_KEY,
+          action: 'pendientes.update',
+          id: editingPendiente.id,
+          titulo: formData.titulo,
+          nota: formData.nota,
+          fechaRequerida: formData.fechaRequerida
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        toast({
+          title: 'Éxito',
+          description: 'Pendiente actualizado correctamente'
+        });
+        setIsEditDialogOpen(false);
+        setEditingPendiente(null);
+        setFormData({ titulo: '', nota: '', fechaRequerida: '' });
+        fetchPendientes();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar el pendiente',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating pendiente:', error);
+      toast({
+        title: 'Error',
+        description: 'Error al actualizar pendiente',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(PENDIENTES_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          apiKey: PENDIENTES_API_KEY,
+          action: 'pendientes.delete',
+          id
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        toast({
+          title: 'Éxito',
+          description: 'Pendiente eliminado correctamente'
+        });
+        setDeletingId(null);
+        fetchPendientes();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'No se pudo eliminar el pendiente',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting pendiente:', error);
+      toast({
+        title: 'Error',
+        description: 'Error al eliminar pendiente',
         variant: 'destructive'
       });
     }
@@ -232,8 +345,15 @@ export default function Pendientes() {
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Guardar
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar'
+                  )}
                 </Button>
               </div>
             </form>
@@ -291,12 +411,116 @@ export default function Pendientes() {
                       <span>ID: {pendiente.id}</span>
                     </div>
                   </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEdit(pendiente)}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setDeletingId(pendiente.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Pendiente</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-titulo">Título *</Label>
+              <Input
+                id="edit-titulo"
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                placeholder="Título del pendiente"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-nota">Nota</Label>
+              <Textarea
+                id="edit-nota"
+                value={formData.nota}
+                onChange={(e) => setFormData({ ...formData, nota: e.target.value })}
+                placeholder="Nota adicional (opcional)"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-fechaRequerida">Fecha Requerida</Label>
+              <Input
+                id="edit-fechaRequerida"
+                type="date"
+                value={formData.fechaRequerida}
+                onChange={(e) => setFormData({ ...formData, fechaRequerida: e.target.value })}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditingPendiente(null);
+                  setFormData({ titulo: '', nota: '', fechaRequerida: '' });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar Cambios'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar pendiente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El pendiente será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingId && handleDelete(deletingId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
