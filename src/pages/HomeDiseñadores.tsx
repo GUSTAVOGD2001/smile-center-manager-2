@@ -123,11 +123,8 @@ const HomeDiseñadores = () => {
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [todayOrders, setTodayOrders] = useState<OrderRow[]>([]);
   
   // Form state para evidencias
   const [titulo, setTitulo] = useState('');
@@ -142,14 +139,6 @@ const HomeDiseñadores = () => {
     fetchOrders();
   }, []);
 
-  useEffect(() => {
-    filterOrdersByDate();
-  }, [orders, selectedDate]);
-
-  useEffect(() => {
-    filterTodayOrders();
-  }, [orders]);
-
   const fetchOrders = async () => {
     try {
       const GET_URL = `${API_URL}?token=${API_TOKEN}`;
@@ -162,41 +151,6 @@ const HomeDiseñadores = () => {
       toast.error('Error al cargar las órdenes');
       console.error(error);
     }
-  };
-
-  const filterOrdersByDate = () => {
-    if (!selectedDate) {
-      setFilteredOrders([]);
-      return;
-    }
-
-    const filtered = orders.filter(order => {
-      if (!order.Timestamp) return false;
-      const orderDate = new Date(order.Timestamp);
-      return (
-        orderDate.getFullYear() === selectedDate.getFullYear() &&
-        orderDate.getMonth() === selectedDate.getMonth() &&
-        orderDate.getDate() === selectedDate.getDate()
-      );
-    });
-
-    setFilteredOrders(filtered);
-    setSearchResults(filtered);
-    setHasSearched(true);
-  };
-
-  const filterTodayOrders = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const filtered = orders.filter(order => {
-      if (!order.Timestamp) return false;
-      const orderDate = new Date(order.Timestamp);
-      orderDate.setHours(0, 0, 0, 0);
-      return orderDate.getTime() === today.getTime();
-    });
-
-    setTodayOrders(filtered);
   };
 
   const actualizarFila = (ordenActualizada: OrderRow) => {
@@ -351,81 +305,6 @@ const HomeDiseñadores = () => {
         </Badge>
       </div>
 
-      {/* Órdenes de Hoy */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Órdenes de Hoy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {todayOrders.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No hay órdenes nuevas para hoy</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[rgba(255,255,255,0.1)]">
-                    <th className="text-left p-3 font-semibold">ID Orden</th>
-                    <th className="text-left p-3 font-semibold">Fecha de registro</th>
-                    <th className="text-left p-3 font-semibold">Estado</th>
-                    <th className="text-left p-3 font-semibold">Nombre</th>
-                    <th className="text-left p-3 font-semibold">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayOrders.map((order) => {
-                    const formatDateOnly = (timestamp?: string) => {
-                      if (!timestamp) return '-';
-                      const date = new Date(timestamp);
-                      const day = String(date.getDate()).padStart(2, '0');
-                      const month = String(date.getMonth() + 1).padStart(2, '0');
-                      const year = date.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    };
-
-                    return (
-                      <tr key={order['ID Orden']} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
-                        <td className="p-3 font-medium">{order['ID Orden']}</td>
-                        <td className="p-3">{formatDateOnly(order.Timestamp)}</td>
-                        <td className="p-3">
-                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                            {order.Estado}
-                          </span>
-                        </td>
-                        <td className="p-3">{order.Nombre || '-'}</td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => showDetails(order)}
-                              className="gap-2"
-                            >
-                              <Eye size={16} />
-                              Ver
-                            </Button>
-                            {order.Recibo && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(buildReciboUrl(order.Recibo!, 'a4'), '_blank')}
-                                className="gap-2"
-                              >
-                                <FileText size={16} />
-                                Recibo
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Buscar Orden por ID */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
@@ -450,59 +329,6 @@ const HomeDiseñadores = () => {
         </CardContent>
       </Card>
 
-      {/* Buscar por Fecha */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Buscar por Fecha</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-sm font-medium mb-2 block">Seleccionar Fecha</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : <span>Selecciona una fecha</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSelectedDate(undefined);
-                setFilteredOrders([]);
-                setSearchResults([]);
-                setHasSearched(false);
-              }}
-            >
-              Limpiar Filtro
-            </Button>
-          </div>
-          {selectedDate && (
-            <p className="text-sm text-muted-foreground mt-3">
-              Mostrando {filteredOrders.length} órdenes para {format(selectedDate, "PPP")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Resultados de búsqueda */}
       {hasSearched && (
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
@@ -518,8 +344,6 @@ const HomeDiseñadores = () => {
                     <th className="text-left p-3 font-semibold">Timestamp</th>
                     <th className="text-left p-3 font-semibold">Estado Actual</th>
                     <th className="text-left p-3 font-semibold">Nuevo Estado</th>
-                    <th className="text-left p-3 font-semibold">Diseñadores</th>
-                    <th className="text-left p-3 font-semibold">Repartidores</th>
                     <th className="text-left p-3 font-semibold">Acciones</th>
                   </tr>
                 </thead>
@@ -537,27 +361,6 @@ const HomeDiseñadores = () => {
                       </td>
                       <td className="p-3">
                         <CeldaEstadoEditable orden={order} onChange={actualizarFila} />
-                      </td>
-                      <td className="p-3">
-                        <Select
-                          value={order.Diseñadores || 'Pendiente'}
-                          onValueChange={(value) => handleUpdateDesigner(order, value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger className="w-[150px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {DISEÑADORES.map(d => (
-                              <SelectItem key={d} value={d}>{d}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="p-3">
-                        <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
-                          {order.Repartidores || 'Pendiente'}
-                        </div>
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
@@ -588,7 +391,7 @@ const HomeDiseñadores = () => {
                   ))}
                   {searchResults.length === 0 && (
                     <tr>
-                      <td className="p-6 text-center text-muted-foreground" colSpan={7}>
+                      <td className="p-6 text-center text-muted-foreground" colSpan={5}>
                         Sin resultados
                       </td>
                     </tr>
