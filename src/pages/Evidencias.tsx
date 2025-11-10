@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { EVIDENCIAS_WEBAPP, EVIDENCIAS_TOKEN } from '@/lib/config';
 
 interface Evidencia {
   'Id Evidencia': string;
@@ -23,8 +24,6 @@ interface Evidencia {
   'Url Imagen': string;
   [key: string]: string;
 }
-
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6KUInjAX3XF62wQz1g-SSQ9fmq9cTAjXaThF0Tn-27EzjuKRY3Or2Wj9DwqqUcuGBCw/exec?apiKey=Tamarindo123456';
 
 const Evidencias = () => {
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
@@ -45,8 +44,9 @@ const Evidencias = () => {
   const fetchEvidencias = async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching evidencias from:', WEBAPP_URL);
-      const response = await fetch(WEBAPP_URL);
+      const url = `${EVIDENCIAS_WEBAPP}?action=evidencias.list&token=${encodeURIComponent(EVIDENCIAS_TOKEN)}`;
+      console.log('Fetching evidencias from:', url);
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
