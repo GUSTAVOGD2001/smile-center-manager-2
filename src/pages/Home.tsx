@@ -48,13 +48,12 @@ const Home = () => {
 
   const latest20Orders = [...orders]
     .sort((a, b) => {
-      const dateAString = a.Timestamp || a['Fecha de Registro'] || a.created_at;
-      const dateBString = b.Timestamp || b['Fecha de Registro'] || b.created_at;
-
-      const dateA = dateAString ? new Date(dateAString).getTime() : 0;
-      const dateB = dateBString ? new Date(dateBString).getTime() : 0;
-
-      return dateB - dateA;
+      // Extract numeric part from ID Orden (e.g., "ORD-0001" -> 1)
+      const numA = parseInt(a['ID Orden']?.replace(/\D/g, '') || '0', 10);
+      const numB = parseInt(b['ID Orden']?.replace(/\D/g, '') || '0', 10);
+      
+      // Sort descending (mayor a menor)
+      return numB - numA;
     })
     .slice(0, 20);
 
