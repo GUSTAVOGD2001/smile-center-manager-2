@@ -16,6 +16,8 @@ import { actualizarDisenador } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import IngresosDentomex from './IngresosDentomex';
+import EgresosDentomex from './EgresosDentomex';
 
 interface OrderRow {
   'ID Orden': string;
@@ -374,10 +376,12 @@ const HomeGerente = () => {
 
   return (
     <Tabs defaultValue="diseñador" className="space-y-6">
-      <TabsList className="grid w-full max-w-md grid-cols-3">
+      <TabsList className="grid w-full max-w-2xl grid-cols-5">
         <TabsTrigger value="diseñador">Inicio</TabsTrigger>
         <TabsTrigger value="dentomex">Dentomex</TabsTrigger>
         <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
+        <TabsTrigger value="ingresos-dentomex">Ingresos Dentomex</TabsTrigger>
+        <TabsTrigger value="egresos-dentomex">Egresos Dentomex</TabsTrigger>
       </TabsList>
 
       {/* Tab de Inicio (Diseñador) */}
@@ -778,6 +782,16 @@ const HomeGerente = () => {
             </Card>
           </>
         )}
+      </TabsContent>
+
+      {/* Tab de Ingresos Dentomex */}
+      <TabsContent value="ingresos-dentomex">
+        <IngresosDentomex />
+      </TabsContent>
+
+      {/* Tab de Egresos Dentomex */}
+      <TabsContent value="egresos-dentomex">
+        <EgresosDentomex />
       </TabsContent>
 
       {/* Dialog de Detalles */}
