@@ -96,7 +96,7 @@ export default function Pendientes() {
     try {
       const response = await fetch(PENDIENTES_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           apiKey: PENDIENTES_API_KEY,
           action: 'pendientes.create',
@@ -139,7 +139,7 @@ export default function Pendientes() {
     try {
       const response = await fetch(PENDIENTES_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           apiKey: PENDIENTES_API_KEY,
           action: 'pendientes.updateEstado',
