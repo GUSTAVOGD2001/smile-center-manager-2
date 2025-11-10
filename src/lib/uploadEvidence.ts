@@ -17,35 +17,58 @@ export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: F
       const base64 = result.split(',')[1];
       res(base64);
     };
-    reader.onerror = rej;
+    reader.onerror = (error) => rej(new Error(`Error al leer archivo: ${error}`));
     reader.readAsDataURL(file);
   });
 
-  const filesPayload = await Promise.all(
-    files.map(async (file, i) => ({
-      fileName: file.name || `archivo_${i + 1}.jpg`,
-      mimeType: file.type || 'application/octet-stream',
-      base64: await fileToBase64(file),
-    }))
-  );
+  try {
+    const filesPayload = await Promise.all(
+      files.map(async (file, i) => ({
+        fileName: file.name || `archivo_${i + 1}.jpg`,
+        mimeType: file.type || 'application/octet-stream',
+        base64: await fileToBase64(file),
+      }))
+    );
 
-  const body = {
-    apiKey: payload.apiKey,
-    action: 'evidencias.create',
-    titulo: payload.titulo || '',
-    tipo: payload.tipo || '',
-    fecha: payload.fecha || '',
-    nota: payload.nota || '',
-    files: filesPayload,
-  };
+    const body = {
+      apiKey: payload.apiKey,
+      action: 'evidencias.create',
+      titulo: payload.titulo || '',
+      tipo: payload.tipo || '',
+      fecha: payload.fecha || '',
+      nota: payload.nota || '',
+      files: filesPayload,
+    };
 
-  const resp = await fetch(WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+    const resp = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  return await resp.json();
+    if (!resp.ok) {
+      throw new Error(`Error del servidor: ${resp.status} ${resp.statusText}`);
+    }
+
+    const data = await resp.json();
+
+    if (!data || data.ok !== true) {
+      throw new Error(data?.error || 'La respuesta del servidor indica un error');
+    }
+
+    console.debug('Evidencia creada:', { 
+      id: data?.id, 
+      files: data?.files?.length, 
+      folderUrl: data?.folderUrl 
+    });
+
+    return data;
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Error de conexión. Verifica tu conexión a internet e intenta nuevamente.');
+    }
+    throw error;
+  }
 }
 
 export async function uploadEvidenceWithUrls(
