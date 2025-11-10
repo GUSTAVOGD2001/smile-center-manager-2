@@ -16,6 +16,7 @@ import Ingresos from "./pages/Ingresos";
 import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
 import HomeDiseñadores from "./pages/HomeDiseñadores";
+import HomeGerente from "./pages/HomeGerente";
 import Evidencias from "./pages/Evidencias";
 import Pendientes from "./pages/Pendientes";
 import Login from "./pages/Login";
@@ -67,6 +68,13 @@ const DiseñadorRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isDiseñador } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isDiseñador()) return <Navigate to="/home-usuario" replace />;
+  return <>{children}</>;
+};
+
+const GerenteRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isGerente } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isGerente()) return <Navigate to="/home-usuario" replace />;
   return <>{children}</>;
 };
 
@@ -196,6 +204,18 @@ const App = () => (
                       <HomeDiseñadores />
                     </DashboardLayout>
                   </DiseñadorRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/home-gerente"
+              element={
+                <AuthGuard>
+                  <GerenteRoute>
+                    <DashboardLayout>
+                      <HomeGerente />
+                    </DashboardLayout>
+                  </GerenteRoute>
                 </AuthGuard>
               }
             />

@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { logout, isAdmin, isAuxiliar, isDiseñador, currentUser } = useAuth();
+  const { logout, isAdmin, isAuxiliar, isDiseñador, isGerente, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -41,18 +41,25 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/home-diseñadores', label: 'Inicio', icon: Home },
   ];
 
+  const gerenteNavItems = [
+    { path: '/home-gerente', label: 'Inicio', icon: Home },
+  ];
+
   const navItems = isAdmin() 
     ? adminNavItems 
     : isAuxiliar() 
     ? auxiliarNavItems 
     : isDiseñador()
     ? diseñadoresNavItems
+    : isGerente()
+    ? gerenteNavItems
     : userNavItems;
   
   const getRoleLabel = () => {
     if (isAdmin()) return 'Administrador';
     if (isAuxiliar()) return 'Auxiliar';
     if (isDiseñador()) return 'Diseñador';
+    if (isGerente()) return 'Gerente';
     return 'Usuario';
   };
 

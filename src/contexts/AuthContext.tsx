@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface User {
   username: string;
   password: string;
-  role: 'admin' | 'user' | 'auxiliar' | 'diseñadores';
+  role: 'admin' | 'user' | 'auxiliar' | 'diseñadores' | 'gerente';
   requirePasswordChange?: boolean;
 }
 
@@ -19,6 +19,7 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isAuxiliar: () => boolean;
   isDiseñador: () => boolean;
+  isGerente: () => boolean;
   changePassword: (newPassword: string) => void;
 }
 
@@ -30,6 +31,7 @@ const DEFAULT_USERS: User[] = [
   { username: 'SecretariaSmile', password: 'Vani123', role: 'auxiliar', requirePasswordChange: true },
   { username: 'Vania', password: '12345', role: 'auxiliar' },
   { username: 'ALAN', password: '12345', role: 'diseñadores' },
+  { username: 'ITZEL', password: '12345', role: 'gerente' },
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -94,6 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuxiliar = () => currentUser?.role === 'auxiliar';
   
   const isDiseñador = () => currentUser?.role === 'diseñadores';
+  
+  const isGerente = () => currentUser?.role === 'gerente';
 
   const changePassword = (newPassword: string) => {
     if (currentUser) {
@@ -117,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAdmin,
       isAuxiliar,
       isDiseñador,
+      isGerente,
       changePassword
     }}>
       {children}

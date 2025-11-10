@@ -12,15 +12,24 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated, isAdmin } = useAuth();
+  const { login, isAuthenticated, isAdmin, isAuxiliar, isDiseñador, isGerente } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      const redirectPath = isAdmin() ? '/' : '/home-usuario';
-      navigate(redirectPath, { replace: true });
+      if (isAdmin()) {
+        navigate('/', { replace: true });
+      } else if (isAuxiliar()) {
+        navigate('/home-auxiliar', { replace: true });
+      } else if (isDiseñador()) {
+        navigate('/home-diseñadores', { replace: true });
+      } else if (isGerente()) {
+        navigate('/home-gerente', { replace: true });
+      } else {
+        navigate('/home-usuario', { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate, isAdmin]);
+  }, [isAuthenticated, navigate, isAdmin, isAuxiliar, isDiseñador, isGerente]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +39,17 @@ const Login = () => {
       const success = login(username, password);
       if (success) {
         toast.success('Bienvenido al Dashboard');
-        const redirectPath = isAdmin() ? '/' : '/home-usuario';
-        navigate(redirectPath, { replace: true });
+        if (isAdmin()) {
+          navigate('/', { replace: true });
+        } else if (isAuxiliar()) {
+          navigate('/home-auxiliar', { replace: true });
+        } else if (isDiseñador()) {
+          navigate('/home-diseñadores', { replace: true });
+        } else if (isGerente()) {
+          navigate('/home-gerente', { replace: true });
+        } else {
+          navigate('/home-usuario', { replace: true });
+        }
       } else {
         toast.error('Credenciales incorrectas');
       }
