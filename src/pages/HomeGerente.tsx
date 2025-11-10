@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Search, Upload, FileImage, Eye, FileText, Plus, Package, CheckCircle, Truck, AlertCircle, Smile, Home, DollarSign, TrendingDown } from 'lucide-react';
+import { Search, Upload, FileImage, Eye, FileText, Plus, Package, CheckCircle, Truck, AlertCircle, Smile } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadEvidenceWithFiles } from '@/lib/uploadEvidence';
 import { actualizarDisenador } from '@/services/api';
@@ -17,19 +18,6 @@ import { buildReciboUrl } from '@/lib/urls';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IngresosDentomex from './IngresosDentomex';
 import EgresosDentomex from './EgresosDentomex';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
 
 interface OrderRow {
   'ID Orden': string;
@@ -129,7 +117,7 @@ function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (
 }
 
 const HomeGerente = () => {
-  const [activeTab, setActiveTab] = useState('diseñador');
+  const { currentUser } = useAuth();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [dentomexOrders, setDentomexOrders] = useState<OrderRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,7 +129,6 @@ const HomeGerente = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoadingDentomex, setIsLoadingDentomex] = useState(true);
-  const { currentUser } = useAuth();
   
   // Form state para evidencias
   const [titulo, setTitulo] = useState('');
@@ -387,53 +374,18 @@ const HomeGerente = () => {
     return parsedDate.toLocaleString('es-ES');
   };
 
-  const menuItems = [
-    { id: 'diseñador', title: 'Inicio', icon: Home },
-    { id: 'dentomex', title: 'Dentomex', icon: Smile },
-    { id: 'evidencias', title: 'Evidencias', icon: FileImage },
-    { id: 'ingresos-dentomex', title: 'Ingresos', icon: DollarSign },
-    { id: 'egresos-dentomex', title: 'Egresos', icon: TrendingDown },
-  ];
-
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar collapsible="icon">
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Menú</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveTab(item.id)}
-                        isActive={activeTab === item.id}
-                        tooltip={item.title}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+    <Tabs defaultValue="diseñador" className="space-y-6">
+      <TabsList className="grid w-full max-w-2xl grid-cols-5">
+        <TabsTrigger value="diseñador">Inicio</TabsTrigger>
+        <TabsTrigger value="dentomex">Dentomex</TabsTrigger>
+        <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
+        <TabsTrigger value="ingresos-dentomex">Ingresos Dentomex</TabsTrigger>
+        <TabsTrigger value="egresos-dentomex">Egresos Dentomex</TabsTrigger>
+      </TabsList>
 
-        <main className="flex-1">
-          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center px-4">
-              <SidebarTrigger />
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-6">
-
-            {/* Tab de Inicio (Diseñador) */}
-            {activeTab === 'diseñador' && (
-              <div className="space-y-6">
+      {/* Tab de Inicio (Diseñador) */}
+      <TabsContent value="diseñador" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Panel de Gerente</h1>
@@ -539,12 +491,10 @@ const HomeGerente = () => {
             </CardContent>
           </Card>
         )}
-              </div>
-            )}
+      </TabsContent>
 
-            {/* Tab de Evidencias */}
-            {activeTab === 'evidencias' && (
-              <div className="space-y-6">
+      {/* Tab de Evidencias */}
+      <TabsContent value="evidencias" className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Registro de Evidencias</h1>
           <p className="text-muted-foreground">Complete el formulario para registrar una evidencia</p>
@@ -626,12 +576,10 @@ const HomeGerente = () => {
             </form>
           </CardContent>
         </Card>
-              </div>
-            )}
+      </TabsContent>
 
-            {/* Tab de Dentomex */}
-            {activeTab === 'dentomex' && (
-              <div className="space-y-6">
+      {/* Tab de Dentomex */}
+      <TabsContent value="dentomex" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Dashboard Dentomex</h1>
@@ -834,21 +782,17 @@ const HomeGerente = () => {
             </Card>
           </>
         )}
-              </div>
-            )}
+      </TabsContent>
 
-            {/* Tab de Ingresos Dentomex */}
-            {activeTab === 'ingresos-dentomex' && (
-              <IngresosDentomex />
-            )}
+      {/* Tab de Ingresos Dentomex */}
+      <TabsContent value="ingresos-dentomex">
+        <IngresosDentomex />
+      </TabsContent>
 
-            {/* Tab de Egresos Dentomex */}
-            {activeTab === 'egresos-dentomex' && (
-              <EgresosDentomex />
-            )}
-          </div>
-        </main>
-      </div>
+      {/* Tab de Egresos Dentomex */}
+      <TabsContent value="egresos-dentomex">
+        <EgresosDentomex />
+      </TabsContent>
 
       {/* Dialog de Detalles */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -942,7 +886,7 @@ const HomeGerente = () => {
           )}
         </DialogContent>
       </Dialog>
-    </SidebarProvider>
+    </Tabs>
   );
 };
 
