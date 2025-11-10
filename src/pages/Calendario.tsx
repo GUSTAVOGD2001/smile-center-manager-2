@@ -54,7 +54,7 @@ const Calendario = () => {
   }, []);
 
   const fetchEvents = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('events')
       .select('*')
       .order('date', { ascending: true });
@@ -126,7 +126,7 @@ const Calendario = () => {
   const handleDeleteEvent = async () => {
     if (!deletingEventId) return;
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('events')
       .delete()
       .eq('id', deletingEventId);
@@ -161,7 +161,7 @@ const Calendario = () => {
     }
 
     if (editingEventId) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('events')
         .update({
           title: formData.title,
@@ -203,7 +203,7 @@ const Calendario = () => {
           }
         }
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('events')
           .insert(eventsToInsert);
 
@@ -217,7 +217,7 @@ const Calendario = () => {
           fetchEvents();
         }
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('events')
           .insert([{
             title: formData.title,
