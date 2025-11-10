@@ -120,13 +120,23 @@ const Home = () => {
             <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
             <p className="text-muted-foreground">Vista general de órdenes</p>
           </div>
-          <Button
-            onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Añadir Orden
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Añadir Orden
+            </Button>
+            <Button
+              onClick={() => window.open('https://script.google.com/macros/s/AKfycbwua6870QB8Sr0BLtnjjxKTyLs2CQY2ef5M0PXOhfJ4MLWhdf0rC6XPz7Tnm3r-yfft5g/exec', '_blank')}
+              className="gap-2"
+              variant="secondary"
+            >
+              <Plus className="h-4 w-4" />
+              Añadir orden sencilla
+            </Button>
+          </div>
         </div>
 
         {/* KPI Cards */}

@@ -417,13 +417,23 @@ const HomeSecretaria = () => {
             <p className="text-muted-foreground">Busque una orden por ID para ver y modificar Diseñadores/Repartidores</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button
-              onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
-              className="gap-2"
-            >
-              <Plus size={18} />
-              Añadir Orden
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+                className="gap-2"
+              >
+                <Plus size={18} />
+                Añadir Orden
+              </Button>
+              <Button
+                onClick={() => window.open('https://script.google.com/macros/s/AKfycbwua6870QB8Sr0BLtnjjxKTyLs2CQY2ef5M0PXOhfJ4MLWhdf0rC6XPz7Tnm3r-yfft5g/exec', '_blank')}
+                className="gap-2"
+                variant="secondary"
+              >
+                <Plus size={18} />
+                Añadir orden sencilla
+              </Button>
+            </div>
             <Badge variant="secondary" className="text-lg px-4 py-2">
               Rol: Auxiliar
             </Badge>
