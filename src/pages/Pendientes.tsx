@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { PENDIENTES_API_URL, PENDIENTES_API_KEY } from '@/lib/urls';
-import { Plus, Calendar, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Plus, Calendar, Pencil, Loader2 } from 'lucide-react';
 
 interface Pendiente {
   id: string;
@@ -27,7 +26,6 @@ export default function Pendientes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPendiente, setEditingPendiente] = useState<Pendiente | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     nota: '',
@@ -208,44 +206,6 @@ export default function Pendientes() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(PENDIENTES_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          apiKey: PENDIENTES_API_KEY,
-          action: 'pendientes.delete',
-          id
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.ok) {
-        toast({
-          title: 'Éxito',
-          description: 'Pendiente eliminado correctamente'
-        });
-        setDeletingId(null);
-        fetchPendientes();
-      } else {
-        toast({
-          title: 'Error',
-          description: 'No se pudo eliminar el pendiente',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting pendiente:', error);
-      toast({
-        title: 'Error',
-        description: 'Error al eliminar pendiente',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const handleToggleEstado = async (id: string, estadoActual: string) => {
     const nuevoEstado = estadoActual === 'Pendiente' ? 'Completada' : 'Pendiente';
 
@@ -412,24 +372,14 @@ export default function Pendientes() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEdit(pendiente)}
-                      className="h-8 w-8"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setDeletingId(pendiente.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleEdit(pendiente)}
+                    className="h-8 w-8"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -501,26 +451,6 @@ export default function Pendientes() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar pendiente?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El pendiente será eliminado permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deletingId && handleDelete(deletingId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
