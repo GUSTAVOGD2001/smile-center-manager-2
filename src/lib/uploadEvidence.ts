@@ -9,66 +9,64 @@ type EvidencePayload = {
   nota: string;
 };
 
-export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: File[]) {
-  const fileToBase64 = (file: File) => new Promise<string>((res, rej) => {
+// Convierte File -> base64 (solo la parte después de la coma)
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = () => {
       const result = reader.result as string;
-      const base64 = result.split(',')[1];
-      res(base64);
+      const commaIndex = result.indexOf(',');
+      // "data:image/jpeg;base64,XXXX" -> "XXXX"
+      const base64 = commaIndex >= 0 ? result.substring(commaIndex + 1) : result;
+      resolve(base64);
     };
-    reader.onerror = (error) => rej(new Error(`Error al leer archivo: ${error}`));
+
+    reader.onerror = (err) => reject(err);
     reader.readAsDataURL(file);
   });
+}
 
-  try {
-    const filesPayload = await Promise.all(
-      files.map(async (file, i) => ({
-        fileName: file.name || `archivo_${i + 1}.jpg`,
+export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: File[]) {
+  const filesArray = Array.isArray(files) ? files : [];
+
+  // 1) Convertir todos los archivos a {fileName, mimeType, base64}
+  const filesPayload = await Promise.all(
+    filesArray
+      .filter((f) => !!f)
+      .map(async (file, idx) => ({
+        fileName: file.name || `archivo_${Date.now()}_${idx + 1}.jpg`,
         mimeType: file.type || 'application/octet-stream',
         base64: await fileToBase64(file),
       }))
-    );
+  );
 
-    const body = {
-      apiKey: payload.apiKey,
-      action: 'evidencias.create',
-      titulo: payload.titulo || '',
-      tipo: payload.tipo || '',
-      fecha: payload.fecha || '',
-      nota: payload.nota || '',
-      files: filesPayload,
-    };
+  // 2) JSON que espera Apps Script
+  const body = {
+    apiKey: payload.apiKey,                       // "Tamarindo123456"
+    action: payload.action ?? 'evidencias.create',
+    titulo: payload.titulo ?? '',
+    tipo:   payload.tipo   ?? '',
+    fecha:  payload.fecha  ?? '',
+    nota:   payload.nota   ?? '',
+    files:  filesPayload,
+  };
 
-    const resp = await fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+  // 3) IMPORTANTE: NO usar application/json para evitar CORS
+  const resp = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8', // 👈 CLAVE para que no haya preflight
+    },
+    body: JSON.stringify(body),
+  });
 
-    if (!resp.ok) {
-      throw new Error(`Error del servidor: ${resp.status} ${resp.statusText}`);
-    }
-
-    const data = await resp.json();
-
-    if (!data || data.ok !== true) {
-      throw new Error(data?.error || 'La respuesta del servidor indica un error');
-    }
-
-    console.debug('Evidencia creada:', { 
-      id: data?.id, 
-      files: data?.files?.length, 
-      folderUrl: data?.folderUrl 
-    });
-
-    return data;
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Error de conexión. Verifica tu conexión a internet e intenta nuevamente.');
-    }
-    throw error;
+  if (!resp.ok) {
+    throw new Error(`HTTP ${resp.status}`);
   }
+
+  const data = await resp.json();
+  return data;
 }
 
 export async function uploadEvidenceWithUrls(
