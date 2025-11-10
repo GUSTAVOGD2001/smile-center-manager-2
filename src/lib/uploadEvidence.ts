@@ -10,33 +10,42 @@ type EvidencePayload = {
 };
 
 export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: File[]) {
-  const fd = new FormData();
-  fd.append('apiKey', payload.apiKey);
-  fd.append('action', payload.action);
-  fd.append('titulo', payload.titulo ?? '');
-  fd.append('tipo', payload.tipo ?? '');
-  fd.append('fecha', payload.fecha ?? '');
-  fd.append('nota', payload.nota ?? '');
-
-  // Append files as file1, file2, file3, etc.
-  files.forEach((file, i) => {
-    if (!file) return;
-    const safeName = file.name || `captura_${Date.now()}_${i + 1}.jpg`;
-    fd.append(`file${i + 1}`, file, safeName);
+  const fileToBase64 = (file: File) => new Promise<string>((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      res(base64);
+    };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
   });
+
+  const filesPayload = await Promise.all(
+    files.map(async (file, i) => ({
+      fileName: file.name || `archivo_${i + 1}.jpg`,
+      mimeType: file.type || 'application/octet-stream',
+      base64: await fileToBase64(file),
+    }))
+  );
+
+  const body = {
+    apiKey: payload.apiKey,
+    action: 'evidencias.create',
+    titulo: payload.titulo || '',
+    tipo: payload.tipo || '',
+    fecha: payload.fecha || '',
+    nota: payload.nota || '',
+    files: filesPayload,
+  };
 
   const resp = await fetch(WEBAPP_URL, {
     method: 'POST',
-    body: fd,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 
-  const data = await resp.json();
-  console.debug('Evidencia creada:', { id: data?.id, files: data?.files?.length, folderUrl: data?.folderUrl });
-  
-  if (!data || data.ok !== true) {
-    throw new Error(data?.error || `Error al crear evidencia: ${resp.status}`);
-  }
-  return data;
+  return await resp.json();
 }
 
 export async function uploadEvidenceWithUrls(
