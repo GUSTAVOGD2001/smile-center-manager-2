@@ -629,6 +629,7 @@ const HomeGerente = () => {
                       <th className="text-left p-3 font-semibold">Fecha Requerida</th>
                       <th className="text-left p-3 font-semibold">Timestamp</th>
                       <th className="text-left p-3 font-semibold">Estado</th>
+                      <th className="text-left p-3 font-semibold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -646,12 +647,37 @@ const HomeGerente = () => {
                               {order.Estado}
                             </span>
                           </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => showDetails(order)}
+                                className="gap-2"
+                              >
+                                <Eye size={16} />
+                                Ver Detalles
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                  window.open(receiptUrl, '_blank');
+                                }}
+                                className="gap-2"
+                              >
+                                <FileText size={16} />
+                                Ver Recibo
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}
                     {dentomexSearchResults.length === 0 && (
                       <tr>
-                        <td className="p-6 text-center text-muted-foreground" colSpan={4}>
+                        <td className="p-6 text-center text-muted-foreground" colSpan={5}>
                           Sin resultados
                         </td>
                       </tr>
@@ -756,7 +782,7 @@ const HomeGerente = () => {
 
       {/* Dialog de Detalles */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="glass-card max-w-2xl">
+        <DialogContent className="glass-card max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles de la Orden</DialogTitle>
           </DialogHeader>
@@ -797,6 +823,48 @@ const HomeGerente = () => {
                   <Label>Apellido</Label>
                   <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
                     {selectedOrder.Apellido || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fecha Requerida</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Fecha Requerida'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de trabajo</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Tipo de trabajo'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Material</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Material || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Especificación</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Especificación'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Color Global</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Color Global'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Dientes Seleccionados</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder['Dientes Seleccionados'] || 'N/A'}
+                  </div>
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Puentes</Label>
+                  <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    {selectedOrder.Puentes || 'N/A'}
                   </div>
                 </div>
               </div>
