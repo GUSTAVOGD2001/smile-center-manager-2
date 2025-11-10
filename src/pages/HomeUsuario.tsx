@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Search, Eye, FileText } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { buildReciboUrl } from '@/lib/urls';
 
 interface OrderRow {
@@ -24,77 +26,45 @@ interface OrderRow {
   [key: string]: string | undefined;
 }
 
-const HomeUsuario = () => {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+const ESTADOS = [
+  'Recepcion',
+  'Area de yeso',
+  'Diseño',
+  'Area de fresado',
+  'Ajuste',
+  'Terminado',
+  'Listo para recoger',
+  'Cancelado',
+  'Entregado',
+  'Entregado-Pendiente de pago',
+];
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+const API_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
+const API_TOKEN = 'Tamarindo123456';
 
-  const fetchOrders = async () => {
-    try {
-      const GET_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
-      const response = await fetch(GET_URL);
-      const data = await response.json();
-      
-      // Filter to show only current month
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      const filteredRows = (data.rows || []).filter((order: OrderRow) => {
-        const orderDate = new Date(order.Timestamp);
-        return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
-      });
-      
-      setOrders(filteredRows);
-    } catch (error) {
-      toast.error('Error al cargar las órdenes');
-      console.error(error);
-    }
-  };
+function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (patch: OrderRow) => void }) {
+  const [saving, setSaving] = useState(false);
 
-  const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      toast.error('Ingrese un ID de orden para buscar');
-      return;
-    }
-    
-    // Format search term: if it's a number, convert to ORD-XXXX format
-    let formattedSearchTerm = searchTerm.trim();
-    if (/^\d+$/.test(formattedSearchTerm)) {
-      const orderNumber = formattedSearchTerm.padStart(4, '0');
-      formattedSearchTerm = `ORD-${orderNumber}`;
-    }
-    
-    const results = orders.filter(order => 
-      order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
-    );
-    setSearchResults(results);
-    if (results.length === 0) {
-      toast.info('No se encontraron órdenes');
-    }
-  };
+  async function onChangeEstado(nuevo: string) {
+    const orderId = orden['ID Orden'];
+    if (!orderId) return;
 
-  const handleUpdateStatus = async (order: OrderRow, newStatus: string) => {
-    const orderId = order['ID Orden'];
-    setIsLoading(true);
-    
+    const prevEstado = orden.Estado ?? '';
+    if (nuevo === prevEstado) return;
+    const nextOrden = { ...orden, Estado: nuevo };
+    onChange(nextOrden);
+    setSaving(true);
+
     try {
       const requestBody = {
-        token: 'Tamarindo123456',
+        token: API_TOKEN,
         action: 'update',
         keyColumn: 'ID Orden',
         keyValue: orderId,
-        newStatus: newStatus,
+        newStatus: nuevo,
       };
 
-      const response = await fetch('https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -105,26 +75,103 @@ const HomeUsuario = () => {
       const result = await response.json();
 
       if (result.ok) {
-        toast.success('Estado actualizado correctamente');
-        // Update local state
-        setSearchResults(prev =>
-          prev.map(o =>
-            o['ID Orden'] === orderId ? { ...o, Estado: newStatus } : o
-          )
-        );
-        setOrders(prev =>
-          prev.map(o =>
-            o['ID Orden'] === orderId ? { ...o, Estado: newStatus } : o
-          )
-        );
+        toast.success(`Estado actualizado (${orderId})`);
       } else {
-        toast.error(result.message || 'Error al actualizar el estado');
+        onChange({ ...orden, Estado: prevEstado });
+        toast.error(result.message || 'No se pudo actualizar el estado');
       }
-    } catch (error) {
-      toast.error('Error al actualizar el estado');
-      console.error(error);
+    } catch (error: any) {
+      onChange({ ...orden, Estado: prevEstado });
+      toast.error(error?.message || 'No se pudo actualizar el estado');
     } finally {
-      setIsLoading(false);
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Select value={orden.Estado || undefined} onValueChange={onChangeEstado} disabled={saving}>
+      <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+        <SelectValue placeholder="-- Selecciona --" />
+      </SelectTrigger>
+      <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
+        {ESTADOS.map(estado => (
+          <SelectItem key={estado} value={estado}>
+            {estado}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+const HomeUsuario = () => {
+  const { currentUser } = useAuth();
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const GET_URL = `${API_URL}?token=${API_TOKEN}`;
+      const response = await fetch(GET_URL);
+      const data = await response.json();
+
+      const sourceRows = Array.isArray(data?.rows) ? (data.rows as OrderRow[]) : [];
+      setOrders(sourceRows);
+    } catch (error) {
+      toast.error('Error al cargar las órdenes');
+      console.error(error);
+    }
+  };
+
+  const actualizarFila = (ordenActualizada: OrderRow) => {
+    const orderId = ordenActualizada['ID Orden'];
+    if (!orderId) return;
+
+    setSearchResults(prev =>
+      prev.map(item => (item['ID Orden'] === orderId ? { ...item, ...ordenActualizada } : item))
+    );
+
+    setOrders(prev => {
+      const exists = prev.some(item => item['ID Orden'] === orderId);
+      if (exists) {
+        return prev.map(item => (item['ID Orden'] === orderId ? { ...item, ...ordenActualizada } : item));
+      }
+      return [...prev, ordenActualizada];
+    });
+
+    setSelectedOrder(prev =>
+      prev && prev['ID Orden'] === orderId ? { ...prev, ...ordenActualizada } : prev
+    );
+  };
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      toast.error('Ingrese un ID de orden para buscar');
+      return;
+    }
+    
+    let formattedSearchTerm = searchTerm.trim();
+    if (/^\d+$/.test(formattedSearchTerm)) {
+      const orderNumber = formattedSearchTerm.padStart(4, '0');
+      formattedSearchTerm = `ORD-${orderNumber}`;
+    }
+
+    const results = orders.filter(order =>
+      order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
+    );
+    setSearchResults(results);
+    setHasSearched(true);
+    setSelectedOrder(null);
+    if (results.length === 0) {
+      toast.info('No se encontraron órdenes');
     }
   };
 
@@ -135,14 +182,19 @@ const HomeUsuario = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
-        <p className="text-muted-foreground">Busque una orden por ID para ver y modificar su estado</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
+          <p className="text-muted-foreground">Busque una orden por ID para ver y modificar su estado</p>
+        </div>
+        <Badge variant="outline" className="text-lg px-4 py-2">
+          Rol: Usuario - {currentUser?.username}
+        </Badge>
       </div>
 
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
-          <CardTitle>Buscar Orden</CardTitle>
+          <CardTitle>Buscar Orden por ID</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
@@ -163,7 +215,7 @@ const HomeUsuario = () => {
         </CardContent>
       </Card>
 
-      {searchResults.length > 0 && (
+      {hasSearched && (
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
             <CardTitle>Resultados de Búsqueda</CardTitle>
@@ -191,27 +243,7 @@ const HomeUsuario = () => {
                         </span>
                       </td>
                       <td className="p-3">
-                        <Select
-                          defaultValue={order.Estado}
-                          onValueChange={(value) => handleUpdateStatus(order, value)}
-                          disabled={isLoading}
-                        >
-                          <SelectTrigger className="w-[200px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border-[rgba(255,255,255,0.1)]">
-                            <SelectItem value="Recepcion">Recepcion</SelectItem>
-                            <SelectItem value="Area de yeso">Area de yeso</SelectItem>
-                            <SelectItem value="Diseño">Diseño</SelectItem>
-                            <SelectItem value="Area de fresado">Area de fresado</SelectItem>
-                            <SelectItem value="Ajuste">Ajuste</SelectItem>
-                            <SelectItem value="Terminado">Terminado</SelectItem>
-                            <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
-                            <SelectItem value="Cancelado">Cancelado</SelectItem>
-                            <SelectItem value="Entregado">Entregado</SelectItem>
-                            <SelectItem value="Entregado-Pendiente de pago">Entregado-Pendiente de pago</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <CeldaEstadoEditable orden={order} onChange={actualizarFila} />
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
@@ -240,6 +272,13 @@ const HomeUsuario = () => {
                       </td>
                     </tr>
                   ))}
+                  {searchResults.length === 0 && (
+                    <tr>
+                      <td className="p-6 text-center text-muted-foreground" colSpan={5}>
+                        Sin resultados
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -250,7 +289,7 @@ const HomeUsuario = () => {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="glass-card max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Detalles de la Orden</DialogTitle>
+            <DialogTitle>Detalles de la Orden (Solo Lectura)</DialogTitle>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-4 mt-4">
