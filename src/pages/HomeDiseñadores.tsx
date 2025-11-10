@@ -220,8 +220,7 @@ const HomeDiseñadores = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Mantenimiento">Mantenimiento</SelectItem>
-                    <SelectItem value="Operación">Operación</SelectItem>
-                    <SelectItem value="Seguridad">Seguridad</SelectItem>
+                    <SelectItem value="Discos">Discos</SelectItem>
                     <SelectItem value="Otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
