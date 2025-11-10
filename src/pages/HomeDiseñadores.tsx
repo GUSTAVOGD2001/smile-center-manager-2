@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Search, Upload, FileImage } from 'lucide-react';
+import { Search, Upload, FileImage, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { uploadEvidenceWithFiles, uploadEvidenceWithUrls } from '@/lib/uploadEvidence';
+import { buildReciboUrl } from '@/lib/urls';
 
 interface OrderRow {
   'ID Orden': string;
@@ -25,6 +26,7 @@ const HomeDiseñadores = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   
   // Form state
   const [titulo, setTitulo] = useState('');
@@ -69,6 +71,53 @@ const HomeDiseñadores = () => {
     setSearchResults(results);
     if (results.length === 0) {
       toast.info('No se encontraron órdenes');
+    }
+  };
+
+  const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
+    const id = order['ID Orden'];
+    if (!id) return;
+
+    setUpdatingIds((prev) => new Set(prev).add(id));
+
+    try {
+      const UPDATE_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
+      const response = await fetch(UPDATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          token: 'Tamarindo123456',
+          action: 'update.estado',
+          id,
+          nuevoEstado
+        })
+      });
+
+      if (!response.ok) {
+        toast.error(`HTTP ${response.status}: ${response.statusText}`);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.ok) {
+        toast.success(`Estado de ${id} actualizado a "${nuevoEstado}"`);
+        fetchOrders();
+        // Actualizar resultados de búsqueda
+        setSearchResults(prev => 
+          prev.map(o => o['ID Orden'] === id ? { ...o, Estado: nuevoEstado } : o)
+        );
+      } else {
+        toast.error(data.error || 'Error al actualizar estado');
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+      toast.error('Error de conexión (CORS o red)');
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -170,21 +219,51 @@ const HomeDiseñadores = () => {
                     <th className="text-left p-3 font-semibold">Timestamp</th>
                     <th className="text-left p-3 font-semibold">Cliente</th>
                     <th className="text-left p-3 font-semibold">Estado</th>
+                    <th className="text-left p-3 font-semibold">Recibo</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {searchResults.map((order, idx) => (
-                    <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
-                      <td className="p-3">{order['ID Orden']}</td>
-                      <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
-                      <td className="p-3">{order.Nombre} {order.Apellido}</td>
-                      <td className="p-3">
-                        <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                          {order.Estado}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {searchResults.map((order, idx) => {
+                    const id = order['ID Orden'];
+                    const isUpdating = updatingIds.has(id);
+                    
+                    return (
+                      <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                        <td className="p-3">{id}</td>
+                        <td className="p-3">{new Date(order.Timestamp).toLocaleString('es-ES')}</td>
+                        <td className="p-3">{order.Nombre} {order.Apellido}</td>
+                        <td className="p-3">
+                          <Select
+                            value={order.Estado}
+                            onValueChange={(nuevoEstado) => updateEstado(order, nuevoEstado)}
+                            disabled={isUpdating}
+                          >
+                            <SelectTrigger className="w-[180px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pendiente">Pendiente</SelectItem>
+                              <SelectItem value="En proceso">En proceso</SelectItem>
+                              <SelectItem value="Listo para recoger">Listo para recoger</SelectItem>
+                              <SelectItem value="Entregado">Entregado</SelectItem>
+                              <SelectItem value="Cancelado">Cancelado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="p-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(buildReciboUrl(id), '_blank')}
+                            className="gap-2"
+                          >
+                            <Eye size={16} />
+                            Ver
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
