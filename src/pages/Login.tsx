@@ -93,7 +93,7 @@ const Login = () => {
           <img 
             src={spiralDevLogo} 
             alt="Spiral Development Group" 
-            className="h-5 w-auto"
+            className="h-5 w-auto brightness-0 invert"
           />
           <span>Spiral Development Group</span>
         </div>
