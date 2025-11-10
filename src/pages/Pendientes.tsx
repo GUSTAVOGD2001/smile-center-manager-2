@@ -38,11 +38,7 @@ export default function Pendientes() {
       setIsLoading(true);
       const url = `${PENDIENTES_API_URL}?apiKey=${PENDIENTES_API_KEY}`;
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'pendientes.list'
-        })
+        method: 'GET'
       });
 
       const data = await response.json();
@@ -98,11 +94,11 @@ export default function Pendientes() {
     }
 
     try {
-      const url = `${PENDIENTES_API_URL}?apiKey=${PENDIENTES_API_KEY}`;
-      const response = await fetch(url, {
+      const response = await fetch(PENDIENTES_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          apiKey: PENDIENTES_API_KEY,
           action: 'pendientes.create',
           titulo: formData.titulo,
           nota: formData.nota,
@@ -141,11 +137,11 @@ export default function Pendientes() {
     const nuevoEstado = estadoActual === 'Pendiente' ? 'Completada' : 'Pendiente';
 
     try {
-      const url = `${PENDIENTES_API_URL}?apiKey=${PENDIENTES_API_KEY}`;
-      const response = await fetch(url, {
+      const response = await fetch(PENDIENTES_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          apiKey: PENDIENTES_API_KEY,
           action: 'pendientes.updateEstado',
           id,
           estado: nuevoEstado
