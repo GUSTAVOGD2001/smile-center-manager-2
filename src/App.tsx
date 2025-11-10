@@ -17,6 +17,7 @@ import HomeUsuario from "./pages/HomeUsuario";
 import HomeSecretaria from "./pages/HomeSecretaria";
 import HomeDiseñadores from "./pages/HomeDiseñadores";
 import Evidencias from "./pages/Evidencias";
+import Pendientes from "./pages/Pendientes";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { useAuth } from "@/contexts/AuthContext";
@@ -205,6 +206,18 @@ const App = () => (
                   <AdminRoute>
                     <DashboardLayout>
                       <Evidencias />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/pendientes"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <Pendientes />
                     </DashboardLayout>
                   </AdminRoute>
                 </AuthGuard>
