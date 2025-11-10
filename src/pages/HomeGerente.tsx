@@ -121,6 +121,9 @@ const HomeGerente = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [dentomexSearchTerm, setDentomexSearchTerm] = useState('');
+  const [dentomexSearchResults, setDentomexSearchResults] = useState<OrderRow[]>([]);
+  const [hasDentomexSearched, setHasDentomexSearched] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoadingDentomex, setIsLoadingDentomex] = useState(true);
@@ -207,6 +210,28 @@ const HomeGerente = () => {
     setSelectedOrder(null);
     if (results.length === 0) {
       toast.info('No se encontraron órdenes');
+    }
+  };
+
+  const handleDentomexSearch = () => {
+    if (!dentomexSearchTerm.trim()) {
+      toast.error('Ingrese un ID de orden para buscar');
+      return;
+    }
+    
+    let formattedSearchTerm = dentomexSearchTerm.trim();
+    if (/^\d+$/.test(formattedSearchTerm)) {
+      const orderNumber = formattedSearchTerm.padStart(4, '0');
+      formattedSearchTerm = `ORD-${orderNumber}`;
+    }
+
+    const results = dentomexOrders.filter(order =>
+      order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
+    );
+    setDentomexSearchResults(results);
+    setHasDentomexSearched(true);
+    if (results.length === 0) {
+      toast.info('No se encontraron órdenes en Dentomex');
     }
   };
 
@@ -350,12 +375,12 @@ const HomeGerente = () => {
   return (
     <Tabs defaultValue="diseñador" className="space-y-6">
       <TabsList className="grid w-full max-w-md grid-cols-3">
-        <TabsTrigger value="diseñador">Diseñador</TabsTrigger>
-        <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
+        <TabsTrigger value="diseñador">Inicio</TabsTrigger>
         <TabsTrigger value="dentomex">Dentomex</TabsTrigger>
+        <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
       </TabsList>
 
-      {/* Tab de Diseñador */}
+      {/* Tab de Inicio (Diseñador) */}
       <TabsContent value="diseñador" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -564,6 +589,79 @@ const HomeGerente = () => {
             Añadir Orden
           </Button>
         </div>
+
+        {/* Barra de búsqueda */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Buscar Orden Dentomex por ID</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Ingrese el ID de la orden"
+                  value={dentomexSearchTerm}
+                  onChange={(e) => setDentomexSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleDentomexSearch()}
+                  className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+                />
+              </div>
+              <Button onClick={handleDentomexSearch} className="gap-2">
+                <Search size={18} />
+                Buscar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resultados de búsqueda Dentomex */}
+        {hasDentomexSearched && (
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader>
+              <CardTitle>Resultados de Búsqueda Dentomex</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                      <th className="text-left p-3 font-semibold">ID Orden</th>
+                      <th className="text-left p-3 font-semibold">Fecha Requerida</th>
+                      <th className="text-left p-3 font-semibold">Timestamp</th>
+                      <th className="text-left p-3 font-semibold">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dentomexSearchResults.map((order, idx) => {
+                      const timestampValue = order.Timestamp || order['Fecha de Registro'] || order.created_at;
+                      const requiredDate = order['Fecha Requerida'] || order.fecha_requerida || order.requiredDate;
+
+                      return (
+                        <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                          <td className="p-3">{order['ID Orden']}</td>
+                          <td className="p-3">{formatDateValue(requiredDate)}</td>
+                          <td className="p-3">{formatDateValue(timestampValue)}</td>
+                          <td className="p-3">
+                            <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
+                              {order.Estado}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {dentomexSearchResults.length === 0 && (
+                      <tr>
+                        <td className="p-6 text-center text-muted-foreground" colSpan={4}>
+                          Sin resultados
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {isLoadingDentomex ? (
           <div className="flex items-center justify-center h-64">
