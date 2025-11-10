@@ -56,11 +56,11 @@ const Evidencias = () => {
       console.log('Evidencias response:', data);
 
       if (data.ok && Array.isArray(data.data)) {
-        // Ordenar por fecha más reciente primero
+        // Ordenar por Id Evidencia de mayor a menor
         const sorted = [...data.data].sort((a, b) => {
-          const dateA = new Date(a.Fecha).getTime();
-          const dateB = new Date(b.Fecha).getTime();
-          return dateB - dateA;
+          const numA = parseInt(a['Id Evidencia'].split('-')[1] || '0');
+          const numB = parseInt(b['Id Evidencia'].split('-')[1] || '0');
+          return numB - numA;
         });
         setEvidencias(sorted);
         setFilteredEvidencias(sorted);
