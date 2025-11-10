@@ -9,8 +9,7 @@ import { toast } from 'sonner';
 import { Search, Upload, FileImage } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { uploadEvidenceWithFiles } from '@/lib/uploadEvidence';
-import { EVIDENCIAS_TOKEN } from '@/lib/config';
+import { uploadEvidenceWithFiles, uploadEvidenceWithUrls } from '@/lib/uploadEvidence';
 
 interface OrderRow {
   'ID Orden': string;
@@ -42,7 +41,7 @@ const HomeDiseñadores = () => {
 
   const fetchOrders = async () => {
     try {
-      const GET_URL = `https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=${encodeURIComponent(EVIDENCIAS_TOKEN)}`;
+      const GET_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456';
       const response = await fetch(GET_URL);
       const data = await response.json();
       setOrders(data.rows || []);
@@ -85,6 +84,15 @@ const HomeDiseñadores = () => {
     setStatusMessage('Guardando…');
 
     try {
+      const payload = {
+        apiKey: 'Tamarindo123456',
+        action: 'evidencias.create' as const,
+        titulo,
+        tipo,
+        fecha,
+        nota,
+      };
+
       const filesInput = document.getElementById('file-input') as HTMLInputElement | null;
       const pickedFiles = filesInput?.files
         ? Array.from(filesInput.files)
@@ -92,29 +100,32 @@ const HomeDiseñadores = () => {
         ? Array.from(files)
         : [];
 
-      const data = await uploadEvidenceWithFiles(
-        {
-          action: 'evidencias.create',
-          titulo,
-          tipo,
-          fecha,
-          nota,
-        },
-        pickedFiles
-      );
+      console.log('Files to upload:', pickedFiles.length);
+      console.log('Files details:', pickedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
 
-      // Éxito: notifica y limpia
-      const evidenciaId = data.id || data.idEvidencia || 'N/A';
-      setStatusMessage(`Evidencia ${evidenciaId} creada correctamente`);
-      toast.success(`Evidencia ${evidenciaId} creada correctamente`);
+      const data = await uploadEvidenceWithFiles(payload, pickedFiles);
 
-      // Limpiar formulario
-      setTitulo('');
-      setTipo('');
-      setFecha('');
-      setNota('');
-      setFiles(null);
-      if (filesInput) filesInput.value = '';
+      if (data?.debug) {
+        console.log('DEBUG Evidencias:', data.debug);
+      }
+
+      if (data.ok) {
+        const evidenciaId = data.id || data.idEvidencia || 'N/A';
+        setStatusMessage(`Evidencia creada correctamente: ${evidenciaId}`);
+        toast.success(`Evidencia ${evidenciaId} creada correctamente`);
+        
+        // Limpiar formulario
+        setTitulo('');
+        setTipo('');
+        setFecha('');
+        setNota('');
+        setFiles(null);
+        const fileInput = document.getElementById('file-input') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+      } else {
+        setStatusMessage('Error al guardar evidencia.');
+        toast.error(data.error || 'Error al guardar evidencia');
+      }
     } catch (error) {
       console.error(error);
       setStatusMessage('Error al guardar evidencia.');
