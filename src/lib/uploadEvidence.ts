@@ -20,14 +20,9 @@ export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: F
 
   // Append files as file1, file2, file3, etc.
   files.forEach((file, i) => {
-    fd.append(`file${i + 1}`, file, file.name);
-  });
-
-  console.log('Uploading evidence with files:', {
-    titulo: payload.titulo,
-    tipo: payload.tipo,
-    fecha: payload.fecha,
-    filesCount: files.length
+    if (!file) return;
+    const safeName = file.name || `captura_${Date.now()}_${i + 1}.jpg`;
+    fd.append(`file${i + 1}`, file, safeName);
   });
 
   const resp = await fetch(WEBAPP_URL, {
@@ -36,10 +31,10 @@ export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: F
   });
 
   const data = await resp.json();
-  console.log('Upload response:', data);
+  console.debug('Evidencia creada:', { id: data?.id, files: data?.files?.length, folderUrl: data?.folderUrl });
   
-  if (!resp.ok || !data.ok) {
-    throw new Error(data.error || `Upload failed: ${resp.status}`);
+  if (!data || data.ok !== true) {
+    throw new Error(data?.error || `Error al crear evidencia: ${resp.status}`);
   }
   return data;
 }
