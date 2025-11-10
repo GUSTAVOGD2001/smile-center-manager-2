@@ -45,8 +45,15 @@ const Evidencias = () => {
   const fetchEvidencias = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching evidencias from:', WEBAPP_URL);
       const response = await fetch(WEBAPP_URL);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Evidencias response:', data);
 
       if (data.ok && Array.isArray(data.data)) {
         // Ordenar por fecha más reciente primero
@@ -57,13 +64,18 @@ const Evidencias = () => {
         });
         setEvidencias(sorted);
         setFilteredEvidencias(sorted);
-        toast.success('Evidencias cargadas correctamente');
+        toast.success(`${sorted.length} evidencias cargadas correctamente`);
       } else {
-        toast.error('No se pudieron cargar las evidencias');
+        console.error('Invalid data structure:', data);
+        toast.error(data.error || 'No se pudieron cargar las evidencias');
+        setEvidencias([]);
+        setFilteredEvidencias([]);
       }
     } catch (error) {
-      console.error(error);
-      toast.error('Error al cargar las evidencias');
+      console.error('Error fetching evidencias:', error);
+      toast.error(`Error al cargar las evidencias: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setEvidencias([]);
+      setFilteredEvidencias([]);
     } finally {
       setIsLoading(false);
     }

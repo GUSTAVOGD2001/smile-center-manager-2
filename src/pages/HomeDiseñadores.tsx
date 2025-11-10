@@ -99,20 +99,18 @@ const HomeDiseñadores = () => {
         : files
         ? Array.from(files)
         : [];
-      const pickedUrls: { url: string; fileName?: string; mimeType?: string }[] = [];
 
-      let data;
-      if (pickedFiles.length > 0) {
-        data = await uploadEvidenceWithFiles(payload, pickedFiles);
-      } else if (pickedUrls.length > 0) {
-        data = await uploadEvidenceWithUrls(payload, pickedUrls);
-      } else {
-        toast.error('Debes seleccionar al menos una foto o proporcionar una URL');
-        setStatusMessage('Debes seleccionar al menos una foto o proporcionar una URL.');
+      console.log('Files to upload:', pickedFiles.length);
+      
+      if (pickedFiles.length === 0) {
+        toast.error('Debes seleccionar al menos una imagen');
+        setStatusMessage('Debes seleccionar al menos una imagen.');
         setIsSaving(false);
         setTimeout(() => setStatusMessage(''), 5000);
         return;
       }
+
+      const data = await uploadEvidenceWithFiles(payload, pickedFiles);
 
       if (data?.debug) {
         console.log('DEBUG Evidencias:', data.debug);

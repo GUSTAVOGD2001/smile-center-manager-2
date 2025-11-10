@@ -11,24 +11,37 @@ type EvidencePayload = {
 
 export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: File[]) {
   const fd = new FormData();
-  fd.set('apiKey', payload.apiKey);
-  fd.set('action', payload.action);
-  fd.set('titulo', payload.titulo ?? '');
-  fd.set('tipo', payload.tipo ?? '');
-  fd.set('fecha', payload.fecha ?? '');
-  fd.set('nota', payload.nota ?? '');
+  fd.append('apiKey', payload.apiKey);
+  fd.append('action', payload.action);
+  fd.append('titulo', payload.titulo ?? '');
+  fd.append('tipo', payload.tipo ?? '');
+  fd.append('fecha', payload.fecha ?? '');
+  fd.append('nota', payload.nota ?? '');
 
-  for (const f of files) {
-    fd.append('files[]', f, f.name);
-  }
+  // Append files with proper names
+  files.forEach((file, index) => {
+    fd.append('files', file, file.name);
+  });
+
+  console.log('Uploading evidence with files:', {
+    titulo: payload.titulo,
+    tipo: payload.tipo,
+    fecha: payload.fecha,
+    filesCount: files.length
+  });
 
   const resp = await fetch(WEBAPP_URL, {
     method: 'POST',
     body: fd,
   });
 
-  if (!resp.ok) throw new Error(`Upload failed: ${resp.status}`);
-  return await resp.json();
+  const data = await resp.json();
+  console.log('Upload response:', data);
+  
+  if (!resp.ok || !data.ok) {
+    throw new Error(data.error || `Upload failed: ${resp.status}`);
+  }
+  return data;
 }
 
 export async function uploadEvidenceWithUrls(
