@@ -18,9 +18,9 @@ export async function uploadEvidenceWithFiles(payload: EvidencePayload, files: F
   fd.append('fecha', payload.fecha ?? '');
   fd.append('nota', payload.nota ?? '');
 
-  // Append files with proper names
-  files.forEach((file, index) => {
-    fd.append('files', file, file.name);
+  // Append files as file1, file2, file3, etc.
+  files.forEach((file, i) => {
+    fd.append(`file${i + 1}`, file, file.name);
   });
 
   console.log('Uploading evidence with files:', {

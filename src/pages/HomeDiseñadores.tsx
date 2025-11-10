@@ -96,36 +96,19 @@ const HomeDiseñadores = () => {
       const filesInput = document.getElementById('file-input') as HTMLInputElement | null;
       const pickedFiles = filesInput?.files
         ? Array.from(filesInput.files)
-        : files
-        ? Array.from(files)
-        : [];
-
-      console.log('Files to upload:', pickedFiles.length);
-      console.log('Files details:', pickedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
+        : (files ? Array.from(files) : []);
 
       const data = await uploadEvidenceWithFiles(payload, pickedFiles);
 
-      if (data?.debug) {
-        console.log('DEBUG Evidencias:', data.debug);
-      }
-
-      if (data.ok) {
-        const evidenciaId = data.id || data.idEvidencia || 'N/A';
-        setStatusMessage(`Evidencia creada correctamente: ${evidenciaId}`);
-        toast.success(`Evidencia ${evidenciaId} creada correctamente`);
-        
-        // Limpiar formulario
-        setTitulo('');
-        setTipo('');
-        setFecha('');
-        setNota('');
-        setFiles(null);
-        const fileInput = document.getElementById('file-input') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-      } else {
-        setStatusMessage('Error al guardar evidencia.');
-        toast.error(data.error || 'Error al guardar evidencia');
-      }
+      // Éxito: notifica y limpia
+      const evidenciaId = data.id || data.idEvidencia || 'N/A';
+      toast.success(`Evidencia ${evidenciaId} creada correctamente`);
+      setTitulo('');
+      setTipo('');
+      setFecha('');
+      setNota('');
+      setFiles(null);
+      if (filesInput) filesInput.value = '';
     } catch (error) {
       console.error(error);
       setStatusMessage('Error al guardar evidencia.');
