@@ -75,8 +75,8 @@ const HomeDiseñadores = () => {
   const handleSubmitEvidencia = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!titulo || !tipo || !fecha || !nota) {
-      toast.error('Complete todos los campos obligatorios');
+    if (!titulo || !tipo || !fecha) {
+      toast.error('Complete los campos obligatorios: Título, Tipo y Fecha');
       return;
     }
 
@@ -101,14 +101,7 @@ const HomeDiseñadores = () => {
         : [];
 
       console.log('Files to upload:', pickedFiles.length);
-      
-      if (pickedFiles.length === 0) {
-        toast.error('Debes seleccionar al menos una imagen');
-        setStatusMessage('Debes seleccionar al menos una imagen.');
-        setIsSaving(false);
-        setTimeout(() => setStatusMessage(''), 5000);
-        return;
-      }
+      console.log('Files details:', pickedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
 
       const data = await uploadEvidenceWithFiles(payload, pickedFiles);
 
@@ -281,14 +274,13 @@ const HomeDiseñadores = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nota">Nota *</Label>
+              <Label htmlFor="nota">Nota</Label>
               <Textarea
                 id="nota"
                 value={nota}
                 onChange={(e) => setNota(e.target.value)}
                 placeholder="Escriba sus observaciones..."
                 className="bg-secondary/50 border-[rgba(255,255,255,0.1)] min-h-[120px]"
-                required
               />
             </div>
 
