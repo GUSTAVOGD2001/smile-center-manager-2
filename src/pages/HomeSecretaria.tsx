@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { Search, Eye, FileText, CalendarIcon, Plus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -262,6 +263,55 @@ const HomeSecretaria = () => {
     setTodayOrders(filtered);
   };
 
+  // Calculate designer chart data for last 7 days
+  const getDesignerChartData = () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const last7DaysOrders = orders.filter(order => {
+      if (!order.Timestamp) return false;
+      const orderDate = new Date(order.Timestamp);
+      return orderDate >= sevenDaysAgo;
+    });
+
+    const dateUnitsMap: { [date: string]: { itzel: number; alan: number } } = {};
+    
+    last7DaysOrders.forEach(order => {
+      const date = new Date(order.Timestamp).toLocaleDateString('es-MX', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      });
+      const designer = (order.Diseñadores || '').toUpperCase();
+      const units = parseInt(order['Piezas Dentales'] as string) || 0;
+      
+      if (!dateUnitsMap[date]) {
+        dateUnitsMap[date] = { itzel: 0, alan: 0 };
+      }
+      
+      if (designer === 'ITZEL') {
+        dateUnitsMap[date].itzel += units;
+      } else if (designer === 'ALAN') {
+        dateUnitsMap[date].alan += units;
+      }
+    });
+
+    return Object.entries(dateUnitsMap)
+      .map(([date, units]) => ({
+        fecha: date,
+        Itzel: units.itzel,
+        Alan: units.alan,
+      }))
+      .sort((a, b) => {
+        const [dayA, monthA, yearA] = a.fecha.split('/');
+        const [dayB, monthB, yearB] = b.fecha.split('/');
+        return new Date(`${yearA}-${monthA}-${dayA}`).getTime() - new Date(`${yearB}-${monthB}-${dayB}`).getTime();
+      });
+  };
+
+  const designerChartData = getDesignerChartData();
+
   const actualizarFila = (ordenActualizada: OrderRow) => {
     const orderId = ordenActualizada['ID Orden'];
     if (!orderId) return;
@@ -445,6 +495,55 @@ const HomeSecretaria = () => {
             </Badge>
           </div>
         </div>
+
+        {/* Designer Chart - Last 7 Days */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Unidades Fresadas por Diseñador por Fecha (Últimos 7 días)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {designerChartData.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No hay datos disponibles para los últimos 7 días</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={designerChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis 
+                    dataKey="fecha" 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '11px' }}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Itzel" 
+                    stroke="#0088FE" 
+                    strokeWidth={3}
+                    name="Itzel"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Alan" 
+                    stroke="#00C49F" 
+                    strokeWidth={3}
+                    name="Alan"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
