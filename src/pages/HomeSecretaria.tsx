@@ -456,6 +456,7 @@ const HomeSecretaria = () => {
                       <th className="text-left p-3 font-semibold">Fecha de registro</th>
                       <th className="text-left p-3 font-semibold">Estado</th>
                       <th className="text-left p-3 font-semibold">Nombre</th>
+                      <th className="text-left p-3 font-semibold">Apellido</th>
                       <th className="text-left p-3 font-semibold">Acciones</th>
                     </tr>
                   </thead>
@@ -480,6 +481,7 @@ const HomeSecretaria = () => {
                             </span>
                           </td>
                           <td className="p-3">{order.Nombre || '-'}</td>
+                          <td className="p-3">{order.Apellido || '-'}</td>
                           <td className="p-3">
                             <div className="flex gap-2">
                               <Button
