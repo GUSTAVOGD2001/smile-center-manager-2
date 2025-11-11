@@ -103,7 +103,7 @@ function mapOrdenResumenToOrderRow(item: OrdenResumen): OrderRow {
     ['Tipo de trabajo', ['Tipo de trabajo', 'tipoDeTrabajo', 'tipoTrabajo']],
     ['Puentes', ['Puentes', 'puentes']],
     ['Color Global', ['Color Global', 'colorGlobal', 'color']],
-    ['Dientes seleccionados', ['Dientes seleccionados', 'dientesSeleccionados', 'dientes']],
+    ['Dientes seleccionados', ['Dientes Seleccionados', 'Dientes seleccionados', 'dientesSeleccionados', 'dientes']],
   ];
 
   for (const [target, keys] of extraMappings) {
