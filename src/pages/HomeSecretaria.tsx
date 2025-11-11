@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Search, Eye, FileText, CalendarIcon, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
@@ -466,11 +467,11 @@ const HomeSecretaria = () => {
         onPasswordChange={handlePasswordChange}
       />
       
-      <div className="space-y-6">
+      <Tabs defaultValue="ordenes" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Búsqueda de Órdenes</h1>
-            <p className="text-muted-foreground">Busque una orden por ID para ver y modificar Diseñadores/Repartidores</p>
+            <h1 className="text-3xl font-bold mb-2">Gestión de Órdenes</h1>
+            <p className="text-muted-foreground">Busque y administre órdenes, vea estadísticas de diseñadores</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
@@ -496,54 +497,12 @@ const HomeSecretaria = () => {
           </div>
         </div>
 
-        {/* Designer Chart - Last 7 Days */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle>Unidades Fresadas por Diseñador por Fecha (Últimos 7 días)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {designerChartData.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No hay datos disponibles para los últimos 7 días</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={designerChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis 
-                    dataKey="fecha" 
-                    stroke="hsl(var(--muted-foreground))"
-                    style={{ fontSize: '11px' }}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    style={{ fontSize: '11px' }}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                    }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Itzel" 
-                    stroke="#0088FE" 
-                    strokeWidth={3}
-                    name="Itzel"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Alan" 
-                    stroke="#00C49F" 
-                    strokeWidth={3}
-                    name="Alan"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="ordenes">Órdenes</TabsTrigger>
+          <TabsTrigger value="disenadores">Diseñadores</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ordenes" className="space-y-6">
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
           <CardHeader>
@@ -907,7 +866,58 @@ const HomeSecretaria = () => {
             )}
           </DialogContent>
         </Dialog>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="disenadores" className="space-y-6">
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader>
+              <CardTitle>Unidades Fresadas por Diseñador por Fecha (Últimos 7 días)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {designerChartData.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No hay datos disponibles para los últimos 7 días</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={designerChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis 
+                      dataKey="fecha" 
+                      stroke="hsl(var(--muted-foreground))"
+                      style={{ fontSize: '11px' }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      style={{ fontSize: '11px' }}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Itzel" 
+                      stroke="#0088FE" 
+                      strokeWidth={3}
+                      name="Itzel"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Alan" 
+                      stroke="#00C49F" 
+                      strokeWidth={3}
+                      name="Alan"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </>
   );
 };
