@@ -305,6 +305,17 @@ const HomeDiseñadores = () => {
         </Badge>
       </div>
 
+      {/* Botón Registro de fresado */}
+      <div className="flex justify-center">
+        <Button 
+          onClick={() => window.open('https://docs.google.com/spreadsheets/d/1b0N4TDN9oOBsAd4jbzm-GwtzMps7iR2cCQuEWj38Enk/edit?gid=0#gid=0', '_blank')}
+          className="w-full max-w-md"
+          size="lg"
+        >
+          Registro de fresado
+        </Button>
+      </div>
+
       {/* Buscar Orden por ID */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
