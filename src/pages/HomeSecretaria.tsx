@@ -33,6 +33,9 @@ interface OrderRow {
   'Especificación'?: string;
   Recibo?: string;
   ReciboURL?: string;
+  Puentes?: string;
+  'Color Global'?: string;
+  'Dientes seleccionados'?: string;
   [key: string]: string | undefined;
 }
 
@@ -98,6 +101,9 @@ function mapOrdenResumenToOrderRow(item: OrdenResumen): OrderRow {
     ['Recibo', ['Recibo', 'recibo']],
     ['ReciboURL', ['ReciboURL', 'reciboUrl', 'reciboURL']],
     ['Tipo de trabajo', ['Tipo de trabajo', 'tipoDeTrabajo', 'tipoTrabajo']],
+    ['Puentes', ['Puentes', 'puentes']],
+    ['Color Global', ['Color Global', 'colorGlobal', 'color']],
+    ['Dientes seleccionados', ['Dientes seleccionados', 'dientesSeleccionados', 'dientes']],
   ];
 
   for (const [target, keys] of extraMappings) {
@@ -765,6 +771,24 @@ const HomeSecretaria = () => {
                     <Label>Especificación</Label>
                     <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
                       {selectedOrder['Especificación'] || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Puentes</Label>
+                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                      {selectedOrder.Puentes || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Color Global</Label>
+                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                      {selectedOrder['Color Global'] || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Dientes seleccionados</Label>
+                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                      {selectedOrder['Dientes seleccionados'] || 'N/A'}
                     </div>
                   </div>
                 </div>
