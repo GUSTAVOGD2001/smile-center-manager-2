@@ -360,13 +360,13 @@ const HomeSecretaria = () => {
   };
 
   const handleUpdateField = async (order: OrderRow, field: 'Diseñadores' | 'Repartidores', newValue: string) => {
-    if (field === 'Diseñadores') {
-      const orderId = order['ID Orden'];
-      if (!orderId) {
-        toast.error('Orden sin ID');
-        return;
-      }
+    const orderId = order['ID Orden'];
+    if (!orderId) {
+      toast.error('Orden sin ID');
+      return;
+    }
 
+    if (field === 'Diseñadores') {
       const prevValue = order.Diseñadores ?? '';
       const applyDesignerUpdate = (list: OrderRow[], value: string) =>
         list.map(item =>
@@ -385,6 +385,7 @@ const HomeSecretaria = () => {
 
       setOrders(prev => applyDesignerUpdate(prev, newValue));
       setSearchResults(prev => applyDesignerUpdate(prev, newValue));
+      setTodayOrders(prev => applyDesignerUpdate(prev, newValue));
       setSelectedOrder(prev =>
         prev && prev['ID Orden'] === orderId ? { ...prev, Diseñadores: newValue } : prev
       );
@@ -398,55 +399,71 @@ const HomeSecretaria = () => {
       } catch (error: any) {
         setOrders(prev => applyDesignerUpdate(prev, prevValue));
         setSearchResults(prev => applyDesignerUpdate(prev, prevValue));
+        setTodayOrders(prev => applyDesignerUpdate(prev, prevValue));
         setSelectedOrder(prev =>
           prev && prev['ID Orden'] === orderId ? { ...prev, Diseñadores: prevValue } : prev
         );
         toast.error(error?.message || 'No se pudo actualizar el diseñador');
       }
-      return;
-    }
+    } else if (field === 'Repartidores') {
+      const prevValue = order.Repartidores ?? '';
+      const apply = (list: OrderRow[], value: string) =>
+        list.map(item =>
+          item['ID Orden'] === orderId
+            ? {
+                ...item,
+                Repartidores: value,
+              }
+            : item
+        );
 
-    setIsLoading(true);
-    try {
-      const payload = {
-        token: API_TOKEN,
-        action: 'update',
-        keyColumn: 'ID Orden',
-        keyValue: order['ID Orden'],
-        newRepartidor: newValue,
-        debug: true
-      };
+      setOrders(prev => apply(prev, newValue));
+      setSearchResults(prev => apply(prev, newValue));
+      setTodayOrders(prev => apply(prev, newValue));
+      setSelectedOrder(prev =>
+        prev && prev['ID Orden'] === orderId ? { ...prev, Repartidores: newValue } : prev
+      );
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-      });
+      try {
+        const requestBody = {
+          token: API_TOKEN,
+          action: 'update',
+          keyColumn: 'ID Orden',
+          keyValue: orderId,
+          columnName: 'Repartidores',
+          newValue: newValue,
+        };
 
-      const data = await response.json();
-      if (data.ok) {
-        toast.success(`${field} actualizado correctamente`);
-
-        // Log the change
-        console.log({
-          user: currentUser?.username,
-          orderId: order['ID Orden'],
-          field,
-          oldValue: order[field],
-          newValue,
-          timestamp: new Date().toISOString()
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: JSON.stringify(requestBody),
         });
 
-        await fetchOrders();
-        handleSearch();
-      } else {
-        toast.error(data.message || `Error al actualizar ${field}`);
+        const result = await response.json();
+
+        if (result.ok) {
+          toast.success(`Repartidor actualizado para ${orderId}`);
+        } else {
+          setOrders(prev => apply(prev, prevValue));
+          setSearchResults(prev => apply(prev, prevValue));
+          setTodayOrders(prev => apply(prev, prevValue));
+          setSelectedOrder(prev =>
+            prev && prev['ID Orden'] === orderId ? { ...prev, Repartidores: prevValue } : prev
+          );
+          toast.error(result.message || 'No se pudo actualizar el repartidor');
+        }
+      } catch (error: any) {
+        setOrders(prev => apply(prev, prevValue));
+        setSearchResults(prev => apply(prev, prevValue));
+        setTodayOrders(prev => apply(prev, prevValue));
+        setSelectedOrder(prev =>
+          prev && prev['ID Orden'] === orderId ? { ...prev, Repartidores: prevValue } : prev
+        );
+        toast.error(`Error al actualizar repartidor: ${error?.message || 'Desconocido'}`);
       }
-    } catch (error) {
-      toast.error(`Error al actualizar ${field}`);
-      console.error(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -518,9 +535,11 @@ const HomeSecretaria = () => {
                     <tr className="border-b border-[rgba(255,255,255,0.1)]">
                       <th className="text-left p-3 font-semibold">ID Orden</th>
                       <th className="text-left p-3 font-semibold">Fecha de registro</th>
-                      <th className="text-left p-3 font-semibold">Estado</th>
                       <th className="text-left p-3 font-semibold">Nombre</th>
                       <th className="text-left p-3 font-semibold">Apellido</th>
+                      <th className="text-left p-3 font-semibold">Estado</th>
+                      <th className="text-left p-3 font-semibold">Diseñadores</th>
+                      <th className="text-left p-3 font-semibold">Repartidores</th>
                       <th className="text-left p-3 font-semibold">Acciones</th>
                     </tr>
                   </thead>
@@ -539,13 +558,46 @@ const HomeSecretaria = () => {
                         <tr key={order['ID Orden']} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
                           <td className="p-3 font-medium">{order['ID Orden']}</td>
                           <td className="p-3">{formatDateOnly(order.Timestamp)}</td>
-                          <td className="p-3">
-                            <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
-                              {order.Estado}
-                            </span>
-                          </td>
                           <td className="p-3">{order.Nombre || '-'}</td>
                           <td className="p-3">{order.Apellido || '-'}</td>
+                          <td className="p-3">
+                            <CeldaEstadoEditable orden={order} onChange={(updated) => {
+                              setTodayOrders(prev => prev.map(o => o['ID Orden'] === order['ID Orden'] ? updated : o));
+                              setOrders(prev => prev.map(o => o['ID Orden'] === order['ID Orden'] ? updated : o));
+                            }} />
+                          </td>
+                          <td className="p-3">
+                            <Select
+                              value={order.Diseñadores || 'Pendiente'}
+                              onValueChange={(value) => handleUpdateField(order, 'Diseñadores', value)}
+                              disabled={isLoading}
+                            >
+                              <SelectTrigger className="w-[130px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {DISEÑADORES.map(d => (
+                                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-3">
+                            <Select
+                              value={order.Repartidores || 'Pendiente'}
+                              onValueChange={(value) => handleUpdateField(order, 'Repartidores', value)}
+                              disabled={isLoading}
+                            >
+                              <SelectTrigger className="w-[130px] bg-secondary/50 border-[rgba(255,255,255,0.1)]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {REPARTIDORES.map(r => (
+                                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
                           <td className="p-3">
                             <div className="flex gap-2">
                               <Button
