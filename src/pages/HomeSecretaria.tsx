@@ -313,6 +313,48 @@ const HomeSecretaria = () => {
 
   const designerChartData = getDesignerChartData();
 
+  // Calculate orders by date for last 7 days
+  const getOrdersChartData = () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const last7DaysOrders = orders.filter(order => {
+      if (!order.Timestamp) return false;
+      const orderDate = new Date(order.Timestamp);
+      return orderDate >= sevenDaysAgo;
+    });
+
+    const dateOrdersMap: { [date: string]: number } = {};
+    
+    last7DaysOrders.forEach(order => {
+      const date = new Date(order.Timestamp).toLocaleDateString('es-MX', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      });
+      
+      if (!dateOrdersMap[date]) {
+        dateOrdersMap[date] = 0;
+      }
+      
+      dateOrdersMap[date] += 1;
+    });
+
+    return Object.entries(dateOrdersMap)
+      .map(([date, count]) => ({
+        fecha: date,
+        ordenes: count,
+      }))
+      .sort((a, b) => {
+        const [dayA, monthA, yearA] = a.fecha.split('/');
+        const [dayB, monthB, yearB] = b.fecha.split('/');
+        return new Date(`${yearA}-${monthA}-${dayA}`).getTime() - new Date(`${yearB}-${monthB}-${dayB}`).getTime();
+      });
+  };
+
+  const ordersChartData = getOrdersChartData();
+
   const actualizarFila = (ordenActualizada: OrderRow) => {
     const orderId = ordenActualizada['ID Orden'];
     if (!orderId) return;
@@ -514,9 +556,10 @@ const HomeSecretaria = () => {
           </div>
         </div>
 
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="ordenes">Órdenes</TabsTrigger>
           <TabsTrigger value="disenadores">Diseñadores</TabsTrigger>
+          <TabsTrigger value="ordenes-chart">Ordenes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ordenes" className="space-y-6">
@@ -962,6 +1005,49 @@ const HomeSecretaria = () => {
                       stroke="#00C49F" 
                       strokeWidth={3}
                       name="Alan"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ordenes-chart" className="space-y-6">
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader>
+              <CardTitle>Número de Órdenes por Fecha (Últimos 7 días)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ordersChartData.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No hay datos disponibles para los últimos 7 días</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={ordersChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis 
+                      dataKey="fecha" 
+                      stroke="hsl(var(--muted-foreground))"
+                      style={{ fontSize: '11px' }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      style={{ fontSize: '11px' }}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px',
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="ordenes" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      name="Órdenes"
                     />
                   </LineChart>
                 </ResponsiveContainer>
