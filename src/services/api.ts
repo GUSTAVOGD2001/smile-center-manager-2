@@ -79,7 +79,7 @@ export async function actualizarRepartidor(params: { id: string; repartidor: str
       action: 'update',
       keyColumn: 'ID Orden',
       keyValue: id,
-      newDelivery: repartidor
+      newRepartidor: repartidor
     }),
   });
 

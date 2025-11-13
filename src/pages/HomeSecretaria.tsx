@@ -42,7 +42,7 @@ interface OrderRow {
 }
 
 const DISEÑADORES = ['ITZEL', 'ALAN', 'Pendiente'];
-const REPARTIDORES = ['Victor', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
+const REPARTIDORES = ['VICTOR', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
 const ESTADOS = [
   'Recepcion',
   'Area de yeso',
