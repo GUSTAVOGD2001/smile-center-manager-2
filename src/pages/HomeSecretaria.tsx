@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog';
-import { actualizarDisenador, obtenerOrdenesPorFecha } from '@/services/api';
+import { actualizarDisenador, actualizarRepartidor, obtenerOrdenesPorFecha } from '@/services/api';
 import type { OrdenResumen } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
@@ -467,36 +467,11 @@ const HomeSecretaria = () => {
       );
 
       try {
-        const requestBody = {
-          token: API_TOKEN,
-          action: 'update',
-          keyColumn: 'ID Orden',
-          keyValue: orderId,
-          columnName: 'Repartidores',
-          newValue: newValue,
-        };
-
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
-          body: JSON.stringify(requestBody),
+        const result = await actualizarRepartidor({
+          id: orderId,
+          repartidor: newValue,
         });
-
-        const result = await response.json();
-
-        if (result.ok) {
-          toast.success(`Repartidor actualizado para ${orderId}`);
-        } else {
-          setOrders(prev => apply(prev, prevValue));
-          setSearchResults(prev => apply(prev, prevValue));
-          setTodayOrders(prev => apply(prev, prevValue));
-          setSelectedOrder(prev =>
-            prev && prev['ID Orden'] === orderId ? { ...prev, Repartidores: prevValue } : prev
-          );
-          toast.error(result.message || 'No se pudo actualizar el repartidor');
-        }
+        toast.success(`Repartidor actualizado para ${result.id}`);
       } catch (error: any) {
         setOrders(prev => apply(prev, prevValue));
         setSearchResults(prev => apply(prev, prevValue));
@@ -504,7 +479,7 @@ const HomeSecretaria = () => {
         setSelectedOrder(prev =>
           prev && prev['ID Orden'] === orderId ? { ...prev, Repartidores: prevValue } : prev
         );
-        toast.error(`Error al actualizar repartidor: ${error?.message || 'Desconocido'}`);
+        toast.error(error?.message || 'No se pudo actualizar el repartidor');
       }
     }
   };

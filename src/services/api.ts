@@ -66,6 +66,34 @@ export async function actualizarEstadoOrden({ id, nuevoEstado }: UpdateEstadoPay
   return data as { ok: true; id: string; estado: string };
 }
 
+export async function actualizarRepartidor(params: { id: string; repartidor: string }) {
+  const { id, repartidor } = params;
+  const url = import.meta.env.VITE_API_UPDATE_URL;
+  if (!url) throw new Error("Falta VITE_API_UPDATE_URL en variables de entorno");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ 
+      token: 'Tamarindo123456',
+      action: 'update',
+      keyColumn: 'ID Orden',
+      keyValue: id,
+      newDelivery: repartidor
+    }),
+  });
+
+  ensureJsonOk(res);
+  const data = await parseJsonSafe(res);
+
+  if (!data || data.ok !== true) {
+    const msg = (data && (data.error || data.message)) || "Respuesta inesperada del servidor";
+    throw new Error(msg);
+  }
+
+  return data as { ok: true; id: string; field?: string; value?: string };
+}
+
 export async function obtenerOrdenesPorFecha(fechaISO: string) {
   const baseUrl = import.meta.env.VITE_API_UPDATE_URL;
   if (!baseUrl) throw new Error("Falta VITE_API_UPDATE_URL");
