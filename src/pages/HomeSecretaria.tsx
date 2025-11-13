@@ -42,7 +42,7 @@ interface OrderRow {
 }
 
 const DISEÑADORES = ['ITZEL', 'ALAN', 'Pendiente'];
-const REPARTIDORES = ['VICTOR', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
+const REPARTIDORES = ['Victor', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
 const ESTADOS = [
   'Recepcion',
   'Area de yeso',
@@ -471,7 +471,7 @@ const HomeSecretaria = () => {
           id: orderId,
           repartidor: newValue,
         });
-        toast.success(`Repartidor actualizado para ${result.id}`);
+        toast.success(`Repartidor actualizado para orden ${orderId}`);
       } catch (error: any) {
         setOrders(prev => apply(prev, prevValue));
         setSearchResults(prev => apply(prev, prevValue));
