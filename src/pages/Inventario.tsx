@@ -34,6 +34,8 @@ const Inventario = () => {
   const [estadoFilter, setEstadoFilter] = useState('Todos');
   const [sortField, setSortField] = useState<SortField>('Fecha de Registro');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [colorFilter, setColorFilter] = useState('Todos');
+  const [grosorFilter, setGrosorFilter] = useState('Todos');
 
   const API_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456&source=inventory';
 
@@ -185,6 +187,28 @@ const Inventario = () => {
     });
   }, [data]);
 
+  // Filtrar datos de análisis
+  const datosFiltradosAnalisis = useMemo(() => {
+    return datosPorColorGrosor.filter(item => {
+      if (colorFilter !== 'Todos' && item.color !== colorFilter) return false;
+      if (grosorFilter !== 'Todos' && item.grosor !== grosorFilter) return false;
+      return true;
+    });
+  }, [datosPorColorGrosor, colorFilter, grosorFilter]);
+
+  // Obtener opciones únicas de color y grosor
+  const coloresUnicos = useMemo(() => {
+    const colores = new Set<string>();
+    datosPorColorGrosor.forEach(item => colores.add(item.color));
+    return Array.from(colores).sort();
+  }, [datosPorColorGrosor]);
+
+  const grosoresUnicos = useMemo(() => {
+    const grosores = new Set<string>();
+    datosPorColorGrosor.forEach(item => grosores.add(item.grosor));
+    return Array.from(grosores).sort();
+  }, [datosPorColorGrosor]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -248,41 +272,99 @@ const Inventario = () => {
           </Card>
         </div>
 
-        {/* Chart */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle>Total de Unidades por Disco (Entregados)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
         {/* Tabs */}
-        <Tabs defaultValue="detalle" className="space-y-6">
+        <Tabs defaultValue="analisis" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="detalle">Detalle de Inventario</TabsTrigger>
             <TabsTrigger value="analisis">Análisis por Color y Grosor</TabsTrigger>
+            <TabsTrigger value="detalle">Detalle de Inventario</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analisis">
+            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+              <CardHeader>
+                <CardTitle>Análisis por Color y Grosor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 mb-6 flex-wrap">
+                  <Select value={colorFilter} onValueChange={setColorFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por color" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todos">Todos los colores</SelectItem>
+                      {coloresUnicos.map(color => (
+                        <SelectItem key={color} value={color}>{color}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={grosorFilter} onValueChange={setGrosorFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por grosor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todos">Todos los grosores</SelectItem>
+                      {grosoresUnicos.map(grosor => (
+                        <SelectItem key={grosor} value={grosor}>{grosor}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCw className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-muted">
+                        <TableRow>
+                          <TableHead>Color</TableHead>
+                          <TableHead>Grosor</TableHead>
+                          <TableHead className="text-center">Nuevos</TableHead>
+                          <TableHead className="text-center">Terminados</TableHead>
+                          <TableHead className="text-center">Entregados</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {datosFiltradosAnalisis.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No hay datos disponibles
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          datosFiltradosAnalisis.map((item, index) => (
+                            <TableRow key={`${item.color}-${item.grosor}`} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
+                              <TableCell className="font-semibold">{item.color}</TableCell>
+                              <TableCell className="font-medium">{item.grosor}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#1e90ff', color: 'white' }}>
+                                  {item.nuevo}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#f97316', color: 'white' }}>
+                                  {item.terminado}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#3cb371', color: 'white' }}>
+                                  {item.entregado}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center font-bold">{item.total}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="detalle">
             <Card className="glass-card border-[rgba(255,255,255,0.1)]">
@@ -350,69 +432,36 @@ const Inventario = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="analisis">
-            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-              <CardHeader>
-                <CardTitle>Análisis por Color y Grosor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <RefreshCw className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="rounded-md border border-[rgba(255,255,255,0.1)] overflow-hidden">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-muted">
-                        <TableRow>
-                          <TableHead>Color</TableHead>
-                          <TableHead>Grosor</TableHead>
-                          <TableHead className="text-center">Nuevos</TableHead>
-                          <TableHead className="text-center">Terminados</TableHead>
-                          <TableHead className="text-center">Entregados</TableHead>
-                          <TableHead className="text-center">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {datosPorColorGrosor.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                              No hay datos disponibles
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          datosPorColorGrosor.map((item, index) => (
-                            <TableRow key={`${item.color}-${item.grosor}`} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
-                              <TableCell className="font-semibold">{item.color}</TableCell>
-                              <TableCell className="font-medium">{item.grosor}</TableCell>
-                              <TableCell className="text-center">
-                                <Badge style={{ backgroundColor: '#1e90ff', color: 'white' }}>
-                                  {item.nuevo}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge style={{ backgroundColor: '#f97316', color: 'white' }}>
-                                  {item.terminado}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge style={{ backgroundColor: '#3cb371', color: 'white' }}>
-                                  {item.entregado}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center font-bold">{item.total}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
+
+        {/* Chart */}
+        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+          <CardHeader>
+            <CardTitle>Total de Unidades por Disco (Entregados)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
