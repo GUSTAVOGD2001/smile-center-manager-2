@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Clock, AlertCircle, Check, X } from 'lucide-react';
+import { Clock, AlertCircle, Check, X, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AsistenciaRow {
   'Nombre Usuario': string;
@@ -182,6 +183,44 @@ export default function Asistencia() {
     return filteredData.reduce((sum, row) => sum + (Number(row['Hora de Retardo']) || 0), 0);
   }, [filteredData]);
 
+  // Agrupar datos por usuario para la vista semanal
+  const datosPorUsuario = useMemo(() => {
+    const grouped = filteredData.reduce((acc, row) => {
+      const usuario = row['Nombre Usuario'];
+      if (!acc[usuario]) {
+        acc[usuario] = {
+          nombre: usuario,
+          registros: [],
+          totalHoras: 0,
+          totalRetardo: 0,
+          diasPuntuales: 0,
+          totalDias: 0,
+        };
+      }
+      
+      acc[usuario].registros.push(row);
+      acc[usuario].totalHoras += Number(row['Horas Trabajadas']) || 0;
+      acc[usuario].totalRetardo += Number(row['Hora de Retardo']) || 0;
+      acc[usuario].totalDias += 1;
+      if (row['Puntualidad']) {
+        acc[usuario].diasPuntuales += 1;
+      }
+      
+      return acc;
+    }, {} as Record<string, {
+      nombre: string;
+      registros: AsistenciaRow[];
+      totalHoras: number;
+      totalRetardo: number;
+      diasPuntuales: number;
+      totalDias: number;
+    }>);
+
+    return Object.values(grouped).sort((a, b) => 
+      a.nombre.localeCompare(b.nombre)
+    );
+  }, [filteredData]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -198,6 +237,14 @@ export default function Asistencia() {
           Consulta y filtra registros de asistencia del personal
         </p>
       </div>
+
+      <Tabs defaultValue="registros" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="registros">Registros Detallados</TabsTrigger>
+          <TabsTrigger value="semanal">Vista Semanal por Usuario</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="registros" className="space-y-6">
 
       {/* Filtros */}
       <Card>
@@ -337,6 +384,130 @@ export default function Asistencia() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="semanal" className="space-y-6">
+          {/* Tarjetas de resumen */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{datosPorUsuario.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  En el período seleccionado
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Promedio Horas/Usuario</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {datosPorUsuario.length > 0 
+                    ? (totalHorasTrabajadas / datosPorUsuario.length).toFixed(2)
+                    : '0.00'} hrs
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Por usuario en el período
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Puntualidad Promedio</CardTitle>
+                <Check className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {datosPorUsuario.length > 0 
+                    ? (datosPorUsuario.reduce((sum, u) => 
+                        sum + (u.diasPuntuales / u.totalDias * 100), 0
+                      ) / datosPorUsuario.length).toFixed(1)
+                    : '0.0'}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  De todos los usuarios
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tabla semanal por usuario */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumen Semanal por Usuario</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead className="text-center">Días Trabajados</TableHead>
+                      <TableHead className="text-right">Total Horas</TableHead>
+                      <TableHead className="text-right">Promedio Horas/Día</TableHead>
+                      <TableHead className="text-right">Total Retardo</TableHead>
+                      <TableHead className="text-center">Días Puntuales</TableHead>
+                      <TableHead className="text-center">% Puntualidad</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {datosPorUsuario.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                          No se encontraron registros
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      datosPorUsuario.map((usuario) => {
+                        const promedioDiario = usuario.totalHoras / usuario.totalDias;
+                        const porcentajePuntualidad = (usuario.diasPuntuales / usuario.totalDias) * 100;
+                        
+                        return (
+                          <TableRow key={usuario.nombre}>
+                            <TableCell className="font-medium">{usuario.nombre}</TableCell>
+                            <TableCell className="text-center">{usuario.totalDias}</TableCell>
+                            <TableCell className="text-right">
+                              {usuario.totalHoras.toFixed(2)} hrs
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {promedioDiario.toFixed(2)} hrs
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {usuario.totalRetardo.toFixed(2)} hrs
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {usuario.diasPuntuales} / {usuario.totalDias}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                porcentajePuntualidad >= 90 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : porcentajePuntualidad >= 70
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              }`}>
+                                {porcentajePuntualidad.toFixed(1)}%
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
