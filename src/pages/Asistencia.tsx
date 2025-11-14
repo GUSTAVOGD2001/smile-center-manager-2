@@ -140,7 +140,7 @@ export default function Asistencia() {
   }
 
   const filteredData = useMemo(() => {
-    return asistencias.filter((row) => {
+    const filtered = asistencias.filter((row) => {
       // Filtro por nombre
       const matchesNombre = row['Nombre Usuario']
         ?.toLowerCase()
@@ -164,6 +164,13 @@ export default function Asistencia() {
       const matchesPuntualidad = filtroPuntualidad ? row['Puntualidad'] === true : true;
 
       return matchesNombre && matchesFecha && matchesPuntualidad;
+    });
+
+    // Ordenar por fecha más reciente primero
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a['Entrada']);
+      const dateB = new Date(b['Entrada']);
+      return dateB.getTime() - dateA.getTime();
     });
   }, [asistencias, searchNombre, fechaInicio, fechaFin, filtroPuntualidad]);
 
