@@ -42,6 +42,26 @@ function formatDateToInput(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+// Función para formatear fecha/hora del formato del API
+function formatDateTime(dateTimeStr: string): string {
+  if (!dateTimeStr || dateTimeStr === 'NaT') return dateTimeStr;
+  
+  try {
+    const date = new Date(dateTimeStr);
+    if (isNaN(date.getTime())) return dateTimeStr;
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}, ${hours}:${minutes}`;
+  } catch {
+    return dateTimeStr;
+  }
+}
+
 // Función para parsear fecha del formato del API
 function parseDateFromAPI(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -248,8 +268,14 @@ export default function Asistencia() {
                     <TableRow key={index}>
                       <TableCell className="font-medium">{row['Nombre Usuario']}</TableCell>
                       <TableCell>{row['Fecha del Día']}</TableCell>
-                      <TableCell>{row['Entrada']}</TableCell>
-                      <TableCell>{row['Salida']}</TableCell>
+                      <TableCell>{formatDateTime(row['Entrada'])}</TableCell>
+                      <TableCell>
+                        {row['Salida'] === 'NaT' ? (
+                          <span className="text-muted-foreground italic">Pendiente</span>
+                        ) : (
+                          formatDateTime(row['Salida'])
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
                         {row['Puntualidad'] ? (
                           <Check className="h-5 w-5 text-green-500 mx-auto" />
