@@ -387,6 +387,45 @@ export default function Asistencia() {
         </TabsContent>
 
         <TabsContent value="semanal" className="space-y-6">
+          {/* Filtros */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fecha-inicio-semanal">Fecha Inicio</Label>
+                  <Input
+                    id="fecha-inicio-semanal"
+                    type="date"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fecha-fin-semanal">Fecha Fin</Label>
+                  <Input
+                    id="fecha-fin-semanal"
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="search-nombre-semanal">Buscar por Nombre</Label>
+                  <Input
+                    id="search-nombre-semanal"
+                    type="text"
+                    placeholder="Nombre del usuario..."
+                    value={searchNombre}
+                    onChange={(e) => setSearchNombre(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Tarjetas de resumen */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
