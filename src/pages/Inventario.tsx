@@ -366,7 +366,36 @@ const Inventario = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="detalle">
+          <TabsContent value="detalle" className="space-y-6">
+            {/* Chart */}
+            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+              <CardHeader>
+                <CardTitle>Total de Unidades por Disco (Entregados)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={400}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
             <Card className="glass-card border-[rgba(255,255,255,0.1)]">
               <CardHeader>
                 <CardTitle>Inventario de Discos</CardTitle>
@@ -433,35 +462,6 @@ const Inventario = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Chart */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle>Total de Unidades por Disco (Entregados)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );
