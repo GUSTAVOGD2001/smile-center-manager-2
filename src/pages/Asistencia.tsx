@@ -3,16 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AsistenciaRow {
   'Nombre Usuario': string;
   'Fecha del Día': string;
-  'Hora de Entrada': string;
-  'Hora de Salida': string;
+  'Entrada': string;
+  'Salida': string;
   'Horas Trabajadas': number;
   'Hora de Retardo': number;
+  'Puntualidad': boolean;
 }
 
 const ASISTENCIA_API_URL = 'https://script.google.com/macros/s/AKfycbyT3rhKLRVU16QyKwWdbxvZfjucqZJJOX5Ex91l0lFgcbQsYSGZAK84-HDrF-zBAMAc/exec?apiKey=TamarindoAsistencia';
@@ -228,8 +229,9 @@ export default function Asistencia() {
                 <TableRow>
                   <TableHead>Nombre Usuario</TableHead>
                   <TableHead>Fecha del Día</TableHead>
-                  <TableHead>Hora de Entrada</TableHead>
-                  <TableHead>Hora de Salida</TableHead>
+                  <TableHead>Entrada</TableHead>
+                  <TableHead>Salida</TableHead>
+                  <TableHead className="text-center">Puntualidad</TableHead>
                   <TableHead className="text-right">Horas Trabajadas</TableHead>
                   <TableHead className="text-right">Hora de Retardo</TableHead>
                 </TableRow>
@@ -237,7 +239,7 @@ export default function Asistencia() {
               <TableBody>
                 {filteredData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       No se encontraron registros
                     </TableCell>
                   </TableRow>
@@ -246,8 +248,15 @@ export default function Asistencia() {
                     <TableRow key={index}>
                       <TableCell className="font-medium">{row['Nombre Usuario']}</TableCell>
                       <TableCell>{row['Fecha del Día']}</TableCell>
-                      <TableCell>{row['Hora de Entrada']}</TableCell>
-                      <TableCell>{row['Hora de Salida']}</TableCell>
+                      <TableCell>{row['Entrada']}</TableCell>
+                      <TableCell>{row['Salida']}</TableCell>
+                      <TableCell className="text-center">
+                        {row['Puntualidad'] ? (
+                          <Check className="h-5 w-5 text-green-500 mx-auto" />
+                        ) : (
+                          <X className="h-5 w-5 text-red-500 mx-auto" />
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         {Number(row['Horas Trabajadas']).toFixed(2)} hrs
                       </TableCell>
