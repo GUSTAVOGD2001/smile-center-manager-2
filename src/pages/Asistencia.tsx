@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Clock, AlertCircle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 interface AsistenciaRow {
   'Nombre Usuario': string;
@@ -40,6 +41,24 @@ function formatDateToInput(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+// Función para formatear solo fecha
+function formatDate(dateStr: string): string {
+  if (!dateStr || dateStr === 'NaT') return dateStr;
+  
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 // Función para formatear fecha/hora del formato del API
@@ -84,6 +103,7 @@ export default function Asistencia() {
   const [asistencias, setAsistencias] = useState<AsistenciaRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchNombre, setSearchNombre] = useState('');
+  const [filtroPuntualidad, setFiltroPuntualidad] = useState(false);
   
   const today = new Date();
   const mondayDefault = getMondayOfWeek(today);
@@ -140,9 +160,12 @@ export default function Asistencia() {
 
       const matchesFecha = rowDate >= inicio && rowDate <= fin;
 
-      return matchesNombre && matchesFecha;
+      // Filtro por puntualidad
+      const matchesPuntualidad = filtroPuntualidad ? row['Puntualidad'] === true : true;
+
+      return matchesNombre && matchesFecha && matchesPuntualidad;
     });
-  }, [asistencias, searchNombre, fechaInicio, fechaFin]);
+  }, [asistencias, searchNombre, fechaInicio, fechaFin, filtroPuntualidad]);
 
   const totalHorasTrabajadas = useMemo(() => {
     return filteredData.reduce((sum, row) => sum + (Number(row['Horas Trabajadas']) || 0), 0);
@@ -204,6 +227,16 @@ export default function Asistencia() {
                 onChange={(e) => setSearchNombre(e.target.value)}
               />
             </div>
+          </div>
+          <div className="flex items-center space-x-2 pt-2">
+            <Switch
+              id="filtro-puntualidad"
+              checked={filtroPuntualidad}
+              onCheckedChange={setFiltroPuntualidad}
+            />
+            <Label htmlFor="filtro-puntualidad" className="cursor-pointer">
+              Mostrar solo registros puntuales
+            </Label>
           </div>
         </CardContent>
       </Card>
@@ -267,7 +300,7 @@ export default function Asistencia() {
                   filteredData.map((row, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{row['Nombre Usuario']}</TableCell>
-                      <TableCell>{row['Fecha del Día']}</TableCell>
+                      <TableCell>{formatDate(row['Fecha del Día'])}</TableCell>
                       <TableCell>{formatDateTime(row['Entrada'])}</TableCell>
                       <TableCell>
                         {row['Salida'] === 'NaT' ? (
