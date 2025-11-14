@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Package, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -134,6 +135,56 @@ const Inventario = () => {
     return <Badge variant="outline">{estado}</Badge>;
   };
 
+  // Parsear disco y agrupar por color y grosor
+  interface ColorGrosorData {
+    color: string;
+    grosor: string;
+    nuevo: number;
+    terminado: number;
+    entregado: number;
+    total: number;
+  }
+
+  const datosPorColorGrosor = useMemo<ColorGrosorData[]>(() => {
+    const agrupado = new Map<string, ColorGrosorData>();
+
+    data.forEach(item => {
+      if (!item.Disco || item.Disco.trim() === '') return;
+
+      // Formato: Z-YETI-A3-16mm-1-57
+      const partes = item.Disco.split('-');
+      if (partes.length < 4) return;
+
+      const color = partes[2]; // A3, B1, etc.
+      const grosor = partes[3]; // 16mm, 18mm, etc.
+      const key = `${color}-${grosor}`;
+
+      if (!agrupado.has(key)) {
+        agrupado.set(key, {
+          color,
+          grosor,
+          nuevo: 0,
+          terminado: 0,
+          entregado: 0,
+          total: 0,
+        });
+      }
+
+      const grupo = agrupado.get(key)!;
+      grupo.total++;
+
+      if (item.Estado === 'Nuevo') grupo.nuevo++;
+      else if (item.Estado === 'Terminado') grupo.terminado++;
+      else if (item.Estado === 'Entregado') grupo.entregado++;
+    });
+
+    return Array.from(agrupado.values()).sort((a, b) => {
+      const colorCompare = a.color.localeCompare(b.color);
+      if (colorCompare !== 0) return colorCompare;
+      return a.grosor.localeCompare(b.grosor);
+    });
+  }, [data]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -226,71 +277,142 @@ const Inventario = () => {
           </CardContent>
         </Card>
 
-        {/* Filters */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle>Inventario de Discos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 mb-6 flex-wrap">
-              <Input
-                placeholder="Buscar por disco o estado..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
-              <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtrar por estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Todos">Todos</SelectItem>
-                  <SelectItem value="Nuevo">Nuevos</SelectItem>
-                  <SelectItem value="Terminado">Terminado</SelectItem>
-                  <SelectItem value="Entregado">Entregados</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Tabs */}
+        <Tabs defaultValue="detalle" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="detalle">Detalle de Inventario</TabsTrigger>
+            <TabsTrigger value="analisis">Análisis por Color y Grosor</TabsTrigger>
+          </TabsList>
 
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <RefreshCw className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <div className="rounded-md border border-[rgba(255,255,255,0.1)] overflow-hidden">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-muted">
-                    <TableRow>
-                      {['Fecha de Registro', 'Disco', 'Unidades', 'Unidades Rotas', 'Total', 'Estado', 'Fecha Entrega', 'Fecha de Terminación'].map((header) => (
-                        <TableHead
-                          key={header}
-                          className="cursor-pointer hover:bg-muted/80"
-                          onClick={() => handleSort(header as SortField)}
-                        >
-                          {header} {sortField === header && (sortDirection === 'asc' ? '↑' : '↓')}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredData.filter(item => item.Disco && item.Disco.trim() !== '').map((item, index) => (
-                      <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
-                        <TableCell>{formatDateDMY(item['Fecha de Registro'])}</TableCell>
-                        <TableCell className="font-medium">{item.Disco}</TableCell>
-                        <TableCell>{item.Unidades}</TableCell>
-                        <TableCell>{item['Unidades Rotas']}</TableCell>
-                        <TableCell className="font-semibold">{item.Total}</TableCell>
-                        <TableCell>{getEstadoBadge(item.Estado)}</TableCell>
-                        <TableCell>{formatDateDMY(item['Fecha Entrega'])}</TableCell>
-                        <TableCell>{formatDateDMY(item['Fecha de Terminación'])}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <TabsContent value="detalle">
+            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+              <CardHeader>
+                <CardTitle>Inventario de Discos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 mb-6 flex-wrap">
+                  <Input
+                    placeholder="Buscar por disco o estado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                  <Select value={estadoFilter} onValueChange={setEstadoFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todos">Todos</SelectItem>
+                      <SelectItem value="Nuevo">Nuevos</SelectItem>
+                      <SelectItem value="Terminado">Terminado</SelectItem>
+                      <SelectItem value="Entregado">Entregados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCw className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-muted">
+                        <TableRow>
+                          {['Fecha de Registro', 'Disco', 'Unidades', 'Unidades Rotas', 'Total', 'Estado', 'Fecha Entrega', 'Fecha de Terminación'].map((header) => (
+                            <TableHead
+                              key={header}
+                              className="cursor-pointer hover:bg-muted/80"
+                              onClick={() => handleSort(header as SortField)}
+                            >
+                              {header} {sortField === header && (sortDirection === 'asc' ? '↑' : '↓')}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredData.filter(item => item.Disco && item.Disco.trim() !== '').map((item, index) => (
+                          <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
+                            <TableCell>{formatDateDMY(item['Fecha de Registro'])}</TableCell>
+                            <TableCell className="font-medium">{item.Disco}</TableCell>
+                            <TableCell>{item.Unidades}</TableCell>
+                            <TableCell>{item['Unidades Rotas']}</TableCell>
+                            <TableCell className="font-semibold">{item.Total}</TableCell>
+                            <TableCell>{getEstadoBadge(item.Estado)}</TableCell>
+                            <TableCell>{formatDateDMY(item['Fecha Entrega'])}</TableCell>
+                            <TableCell>{formatDateDMY(item['Fecha de Terminación'])}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analisis">
+            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+              <CardHeader>
+                <CardTitle>Análisis por Color y Grosor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCw className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-muted">
+                        <TableRow>
+                          <TableHead>Color</TableHead>
+                          <TableHead>Grosor</TableHead>
+                          <TableHead className="text-center">Nuevos</TableHead>
+                          <TableHead className="text-center">Terminados</TableHead>
+                          <TableHead className="text-center">Entregados</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {datosPorColorGrosor.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No hay datos disponibles
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          datosPorColorGrosor.map((item, index) => (
+                            <TableRow key={`${item.color}-${item.grosor}`} className={index % 2 === 0 ? 'bg-muted/50' : ''}>
+                              <TableCell className="font-semibold">{item.color}</TableCell>
+                              <TableCell className="font-medium">{item.grosor}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#1e90ff', color: 'white' }}>
+                                  {item.nuevo}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#f97316', color: 'white' }}>
+                                  {item.terminado}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge style={{ backgroundColor: '#3cb371', color: 'white' }}>
+                                  {item.entregado}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center font-bold">{item.total}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
