@@ -266,14 +266,17 @@ const HomeSecretaria = () => {
 
   // Calculate designer chart data for last 7 days
   const getDesignerChartData = () => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
     const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const last7DaysOrders = orders.filter(order => {
       if (!order.Timestamp) return false;
       const orderDate = new Date(order.Timestamp);
-      return orderDate >= sevenDaysAgo;
+      return orderDate >= sevenDaysAgo && orderDate <= today;
     });
 
     const dateUnitsMap: { [date: string]: { itzel: number; alan: number; sara: number } } = {};
@@ -318,14 +321,17 @@ const HomeSecretaria = () => {
 
   // Calculate orders by date for last 7 days
   const getOrdersChartData = () => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
     const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const last7DaysOrders = orders.filter(order => {
       if (!order.Timestamp) return false;
       const orderDate = new Date(order.Timestamp);
-      return orderDate >= sevenDaysAgo;
+      return orderDate >= sevenDaysAgo && orderDate <= today;
     });
 
     const dateOrdersMap: { [date: string]: number } = {};
