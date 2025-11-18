@@ -53,6 +53,7 @@ const ModificarEstados = () => {
   });
   const [dateTo, setDateTo] = useState<Date>();
   const [searchName, setSearchName] = useState('');
+  const [searchOrderId, setSearchOrderId] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
   const [editingACuenta, setEditingACuenta] = useState<{[key: string]: string}>({});
 
@@ -62,7 +63,7 @@ const ModificarEstados = () => {
 
   useEffect(() => {
     filterOrders();
-  }, [orders, dateFrom, dateTo, searchName]);
+  }, [orders, dateFrom, dateTo, searchName, searchOrderId]);
 
   const filterOrders = () => {
     let filtered = [...orders];
@@ -87,6 +88,13 @@ const ModificarEstados = () => {
         const apellido = order['Apellido']?.toLowerCase() || '';
         const searchLower = searchName.toLowerCase();
         return nombre.includes(searchLower) || apellido.includes(searchLower);
+      });
+    }
+
+    if (searchOrderId) {
+      filtered = filtered.filter(order => {
+        const orderId = order['ID Orden']?.toLowerCase() || '';
+        return orderId.includes(searchOrderId.toLowerCase());
       });
     }
 
@@ -261,11 +269,17 @@ const ModificarEstados = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 placeholder="Buscar por nombre..."
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
+                className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+              />
+              <Input
+                placeholder="Buscar por número de orden (ej: ORD-0001)..."
+                value={searchOrderId}
+                onChange={(e) => setSearchOrderId(e.target.value)}
                 className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
               />
             </div>
@@ -327,6 +341,7 @@ const ModificarEstados = () => {
                   setDateFrom(new Date(now.getFullYear(), now.getMonth(), 1));
                   setDateTo(undefined);
                   setSearchName('');
+                  setSearchOrderId('');
                 }}
               >
                 Limpiar Filtros
