@@ -276,7 +276,7 @@ const HomeSecretaria = () => {
       return orderDate >= sevenDaysAgo;
     });
 
-    const dateUnitsMap: { [date: string]: { itzel: number; alan: number } } = {};
+    const dateUnitsMap: { [date: string]: { itzel: number; alan: number; sara: number } } = {};
     
     last7DaysOrders.forEach(order => {
       const date = new Date(order.Timestamp).toLocaleDateString('es-MX', { 
@@ -288,13 +288,15 @@ const HomeSecretaria = () => {
       const units = parseInt(order['Piezas Dentales'] as string) || 0;
       
       if (!dateUnitsMap[date]) {
-        dateUnitsMap[date] = { itzel: 0, alan: 0 };
+        dateUnitsMap[date] = { itzel: 0, alan: 0, sara: 0 };
       }
       
       if (designer === 'ITZEL') {
         dateUnitsMap[date].itzel += units;
       } else if (designer === 'ALAN') {
         dateUnitsMap[date].alan += units;
+      } else if (designer === 'SARA') {
+        dateUnitsMap[date].sara += units;
       }
     });
 
@@ -303,6 +305,7 @@ const HomeSecretaria = () => {
         fecha: date,
         Itzel: units.itzel,
         Alan: units.alan,
+        Sara: units.sara,
       }))
       .sort((a, b) => {
         const [dayA, monthA, yearA] = a.fecha.split('/');
@@ -980,6 +983,13 @@ const HomeSecretaria = () => {
                       stroke="#00C49F" 
                       strokeWidth={3}
                       name="Alan"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Sara" 
+                      stroke="#FF8042" 
+                      strokeWidth={3}
+                      name="Sara"
                     />
                   </LineChart>
                 </ResponsiveContainer>
