@@ -41,7 +41,7 @@ interface OrderRow {
   [key: string]: string | undefined;
 }
 
-const DISEÑADORES = ['ITZEL', 'ALAN', 'Pendiente'];
+const DISEÑADORES = ['ITZEL', 'ALAN', 'SARA', 'Pendiente'];
 const REPARTIDORES = ['VICTOR', 'ALBERTO', 'JORGE', 'Provisional', 'Pick Up', 'Pendiente'];
 const ESTADOS = [
   'Recepcion',
