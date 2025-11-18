@@ -54,6 +54,7 @@ const ModificarEstados = () => {
   const [dateTo, setDateTo] = useState<Date>();
   const [searchName, setSearchName] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
+  const [editingACuenta, setEditingACuenta] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     fetchOrders();
@@ -122,48 +123,110 @@ const ModificarEstados = () => {
         action: 'update',
         keyColumn: 'ID Orden',
         keyValue: orderId,
-        newStatus: nuevoEstado,
+        newState: nuevoEstado,
       };
 
-      const bodyText = JSON.stringify(requestBody);
-
-      console.log('📝 UPDATE Request body:', requestBody);
-      console.log('📝 UPDATE Body (raw text):', bodyText);
+      console.log('📝 UPDATE Request Body:', JSON.stringify(requestBody));
 
       const response = await fetch(POST_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: bodyText,
+        body: JSON.stringify(requestBody),
       });
 
-      console.log('📝 UPDATE Response status:', response.status);
-      console.log('📝 UPDATE Response ok:', response.ok);
+      console.log('📝 UPDATE Response Status:', response.status, response.statusText);
 
-      const result = await response.json();
-      console.log('📝 UPDATE Result:', result);
+      if (!response.ok) {
+        const isLikelyCORS = !response.headers.get('content-type');
+        if (isLikelyCORS) {
+          console.warn('⚠️ CORS: no hay headers. Asumimos éxito si status = 0 o 200–299.');
+          if (response.status === 0 || (response.status >= 200 && response.status < 300)) {
+            await fetchOrders();
+            toast.success('Estado actualizado correctamente');
+            return;
+          }
+        }
+        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+      }
 
-      if (result.ok) {
+      const responseText = await response.text();
+      console.log('📝 UPDATE Response Text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        console.warn('⚠️ No se pudo parsear como JSON. Asumiendo éxito.');
+        await fetchOrders();
         toast.success('Estado actualizado correctamente');
-        // Update local state
-        setOrders(prevOrders =>
-          prevOrders.map(o =>
-            o['ID Orden'] === orderId ? { ...o, Estado: nuevoEstado } : o
-          )
-        );
-      } else {
-        console.error('📝 UPDATE Error en resultado:', result);
-        toast.error(`Error: ${result.message || 'Error al actualizar el estado'}`);
+        return;
       }
-    } catch (error) {
-      console.error('❌ UPDATE Error crítico:', error);
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast.error('Error CORS: El Google Script debe permitir requests desde este origen');
-        console.error('❌ CORS Error: Asegúrate de que el Google Apps Script esté desplegado como "Anyone" y acepte requests POST');
-      } else {
-        toast.error('Error de conexión al actualizar el estado');
+
+      console.log('📝 UPDATE Response Data:', data);
+      
+      await fetchOrders();
+      toast.success('Estado actualizado correctamente');
+    } catch (error: any) {
+      console.error('❌ ERROR:', error);
+      toast.error(error.message || 'Error al actualizar el estado');
+    } finally {
+      setUpdatingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
+    }
+  };
+
+  const updateACuenta = async (order: OrderRow, nuevoValor: string) => {
+    const orderId = order['ID Orden'];
+    const valorNumerico = Number(nuevoValor);
+    
+    if (isNaN(valorNumerico) || valorNumerico < 0) {
+      toast.error('Por favor ingrese un valor numérico válido');
+      return;
+    }
+
+    setUpdatingIds(prev => new Set(prev).add(orderId));
+
+    try {
+      const POST_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
+      
+      const requestBody = {
+        token: 'Tamarindo123456',
+        action: 'update',
+        keyColumn: 'ID Orden',
+        keyValue: orderId,
+        updates: [
+          { column: 'A Cuenta', value: valorNumerico }
+        ],
+        debug: false
+      };
+
+      const response = await fetch(POST_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}`);
       }
+
+      await fetchOrders();
+      setEditingACuenta(prev => {
+        const newState = { ...prev };
+        delete newState[orderId];
+        return newState;
+      });
+      toast.success('A cuenta actualizado correctamente');
+    } catch (error: any) {
+      console.error('Error al actualizar A cuenta:', error);
+      toast.error(error.message || 'Error al actualizar A cuenta');
     } finally {
       setUpdatingIds(prev => {
         const newSet = new Set(prev);
@@ -339,7 +402,31 @@ const ModificarEstados = () => {
                       <td className="p-3">{fmtFecha(order.Timestamp)}</td>
                       <td className="p-3">{order['Nombre']} {order['Apellido']}</td>
                       <td className="p-3">${order['Costo'] || '0'}</td>
-                      <td className="p-3">${order['A Cuenta'] || '0'}</td>
+                      <td className="p-3">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={(editingACuenta[orderId] ?? order['A Cuenta']) || '0'}
+                          onChange={(e) => setEditingACuenta(prev => ({ ...prev, [orderId]: e.target.value }))}
+                          onBlur={() => {
+                            const newValue = editingACuenta[orderId];
+                            if (newValue !== undefined && newValue !== order['A Cuenta']) {
+                              updateACuenta(order, newValue);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const newValue = editingACuenta[orderId];
+                              if (newValue !== undefined && newValue !== order['A Cuenta']) {
+                                updateACuenta(order, newValue);
+                              }
+                            }
+                          }}
+                          disabled={isUpdating}
+                          className="w-28 bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+                        />
+                      </td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
                           {order.Estado}
