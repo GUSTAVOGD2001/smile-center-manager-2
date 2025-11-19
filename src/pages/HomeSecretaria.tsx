@@ -643,6 +643,18 @@ const HomeSecretaria = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
+                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                  window.open(receiptUrl, '_blank');
+                                }}
+                                className="gap-2"
+                              >
+                                <FileText size={16} />
+                                Ver Recibo
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
                                   setSelectedOrderIdForPrint(order['ID Orden']);
                                   setPrintDialogOpen(true);
                                 }}

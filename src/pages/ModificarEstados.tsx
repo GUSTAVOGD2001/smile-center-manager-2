@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, DollarSign, Wallet, Printer, Layers } from 'lucide-react';
+import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -468,6 +468,18 @@ const ModificarEstados = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const receiptUrl = buildReciboUrl(orderId, 'a4');
+                              window.open(receiptUrl, '_blank');
+                            }}
+                            className="gap-2"
+                          >
+                            <FileText size={16} />
+                            Ver Recibo
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
