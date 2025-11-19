@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { buildReciboUrl } from '@/lib/urls';
 import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
+import { ACuentaDialog } from '@/components/ACuentaDialog';
 
 interface OrderRow {
   'ID Orden': string;
@@ -57,9 +58,10 @@ const ModificarEstados = () => {
   const [searchName, setSearchName] = useState('');
   const [searchOrderId, setSearchOrderId] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
-  const [editingACuenta, setEditingACuenta] = useState<{[key: string]: string}>({});
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
+  const [aCuentaDialogOpen, setACuentaDialogOpen] = useState(false);
+  const [selectedOrderForACuenta, setSelectedOrderForACuenta] = useState<OrderRow | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -230,15 +232,11 @@ const ModificarEstados = () => {
       }
 
       await fetchOrders();
-      setEditingACuenta(prev => {
-        const newState = { ...prev };
-        delete newState[orderId];
-        return newState;
-      });
       toast.success('A cuenta actualizado correctamente');
     } catch (error: any) {
       console.error('Error al actualizar A cuenta:', error);
       toast.error(error.message || 'Error al actualizar A cuenta');
+      throw error;
     } finally {
       setUpdatingIds(prev => {
         const newSet = new Set(prev);
@@ -422,29 +420,18 @@ const ModificarEstados = () => {
                       <td className="p-3">{order['Nombre']} {order['Apellido']}</td>
                       <td className="p-3">${order['Costo'] || '0'}</td>
                       <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={(editingACuenta[orderId] ?? order['A Cuenta']) || '0'}
-                          onChange={(e) => setEditingACuenta(prev => ({ ...prev, [orderId]: e.target.value }))}
-                          onBlur={() => {
-                            const newValue = editingACuenta[orderId];
-                            if (newValue !== undefined && newValue !== order['A Cuenta']) {
-                              updateACuenta(order, newValue);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const newValue = editingACuenta[orderId];
-                              if (newValue !== undefined && newValue !== order['A Cuenta']) {
-                                updateACuenta(order, newValue);
-                              }
-                            }
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedOrderForACuenta(order);
+                            setACuentaDialogOpen(true);
                           }}
                           disabled={isUpdating}
-                          className="w-28 bg-secondary/50 border-[rgba(255,255,255,0.1)]"
-                        />
+                          className="w-28"
+                        >
+                          ${order['A Cuenta'] || '0'}
+                        </Button>
                       </td>
                       <td className="p-3">
                         <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm">
@@ -515,6 +502,20 @@ const ModificarEstados = () => {
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
       />
+
+      {selectedOrderForACuenta && (
+        <ACuentaDialog
+          open={aCuentaDialogOpen}
+          onOpenChange={setACuentaDialogOpen}
+          orderId={selectedOrderForACuenta['ID Orden']}
+          currentACuenta={parseFloat(selectedOrderForACuenta['A Cuenta'] || '0')}
+          costo={parseFloat(selectedOrderForACuenta['Costo'] || '0')}
+          onSuccess={fetchOrders}
+          onUpdateACuenta={async (orderId, newValue) => {
+            await updateACuenta(selectedOrderForACuenta, newValue);
+          }}
+        />
+      )}
     </div>
   );
 };
