@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Search, Eye, FileText, CalendarIcon, Plus } from 'lucide-react';
+import { Search, Eye, FileText, CalendarIcon, Plus, Printer } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import { actualizarDisenador, actualizarRepartidor, obtenerOrdenesPorFecha } fro
 import type { OrdenResumen } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
+import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
 
 interface OrderRow {
   'ID Orden': string;
@@ -189,6 +190,8 @@ const HomeSecretaria = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
@@ -636,17 +639,18 @@ const HomeSecretaria = () => {
                                 <Eye size={16} />
                                 Ver
                               </Button>
-                              {order.Recibo && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => window.open(buildReciboUrl(order.Recibo!, 'a4'), '_blank')}
-                                  className="gap-2"
-                                >
-                                  <FileText size={16} />
-                                  Recibo
-                                </Button>
-                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrderIdForPrint(order['ID Orden']);
+                                  setPrintDialogOpen(true);
+                                }}
+                                className="gap-2"
+                              >
+                                <Printer size={16} />
+                                Imprimir recibo
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -1047,6 +1051,12 @@ const HomeSecretaria = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <PrintReceiptDialog
+        orderId={selectedOrderIdForPrint}
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+      />
     </>
   );
 };

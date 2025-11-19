@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Search, Upload, FileImage, Eye, FileText, Plus, Package, CheckCircle, Truck, AlertCircle, Smile } from 'lucide-react';
+import { Search, Upload, FileImage, Eye, FileText, Plus, Package, CheckCircle, Truck, AlertCircle, Smile, Printer } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadEvidenceWithFiles } from '@/lib/uploadEvidence';
 import { actualizarDisenador } from '@/services/api';
 import type { Orden } from '@/types/orden';
 import { buildReciboUrl } from '@/lib/urls';
+import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IngresosDentomex from './IngresosDentomex';
 import EgresosDentomex from './EgresosDentomex';
@@ -129,6 +130,8 @@ const HomeGerente = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoadingDentomex, setIsLoadingDentomex] = useState(true);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
   
   // Form state para evidencias
   const [titulo, setTitulo] = useState('');
@@ -485,13 +488,13 @@ const HomeGerente = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
-                                window.open(receiptUrl, '_blank');
+                                setSelectedOrderIdForPrint(order['ID Orden']);
+                                setPrintDialogOpen(true);
                               }}
                               className="gap-2"
                             >
-                              <FileText size={16} />
-                              Ver Recibo
+                              <Printer size={16} />
+                              Imprimir recibo
                             </Button>
                           </div>
                         </td>
@@ -685,13 +688,13 @@ const HomeGerente = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
-                                  window.open(receiptUrl, '_blank');
+                                  setSelectedOrderIdForPrint(order['ID Orden']);
+                                  setPrintDialogOpen(true);
                                 }}
                                 className="gap-2"
                               >
-                                <FileText size={16} />
-                                Ver Recibo
+                                <Printer size={16} />
+                                Imprimir recibo
                               </Button>
                             </div>
                           </td>
@@ -905,6 +908,12 @@ const HomeGerente = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <PrintReceiptDialog
+        orderId={selectedOrderIdForPrint}
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+      />
     </Tabs>
   );
 };
