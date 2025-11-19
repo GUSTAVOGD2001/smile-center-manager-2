@@ -488,6 +488,18 @@ const HomeGerente = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => {
+                                const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                window.open(receiptUrl, '_blank');
+                              }}
+                              className="gap-2"
+                            >
+                              <FileText size={16} />
+                              Ver Recibo
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
                                 setSelectedOrderIdForPrint(order['ID Orden']);
                                 setPrintDialogOpen(true);
                               }}
@@ -683,6 +695,18 @@ const HomeGerente = () => {
                               >
                                 <Eye size={16} />
                                 Ver Detalles
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                  window.open(receiptUrl, '_blank');
+                                }}
+                                className="gap-2"
+                              >
+                                <FileText size={16} />
+                                Ver Recibo
                               </Button>
                               <Button
                                 variant="outline"
