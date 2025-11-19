@@ -391,9 +391,28 @@ const HomeGerente = () => {
             <h1 className="text-3xl font-bold mb-2">Panel de Gerente</h1>
             <p className="text-muted-foreground">Búsqueda de órdenes y gestión</p>
           </div>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            Rol: Gerente - {currentUser?.username}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => window.open('https://script.google.com/macros/s/AKfycbwF-dEFJO1lJsPplWf7SO5U3JwG9dTrQ4pWBTLuxS8jVokDLyeVumrCIowqkfDqUmMBQQ/exec', '_blank')}
+                className="gap-2"
+              >
+                <Plus size={18} />
+                Añadir Orden
+              </Button>
+              <Button
+                onClick={() => window.open('https://script.google.com/macros/s/AKfycbwua6870QB8Sr0BLtnjjxKTyLs2CQY2ef5M0PXOhfJ4MLWhdf0rC6XPz7Tnm3r-yfft5g/exec', '_blank')}
+                className="gap-2"
+                variant="secondary"
+              >
+                <Plus size={18} />
+                Añadir orden sencilla
+              </Button>
+            </div>
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              Rol: Gerente - {currentUser?.username}
+            </Badge>
+          </div>
         </div>
 
         <Card className="glass-card border-[rgba(255,255,255,0.1)]">
