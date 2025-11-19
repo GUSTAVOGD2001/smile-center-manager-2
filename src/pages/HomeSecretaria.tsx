@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Search, Eye, FileText, CalendarIcon, Plus, Printer } from 'lucide-react';
+import { Search, Eye, FileText, CalendarIcon, Plus, Printer, MoreVertical } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -629,41 +630,40 @@ const HomeSecretaria = () => {
                             </Select>
                           </td>
                           <td className="p-3">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => showDetails(order)}
-                                className="gap-2"
-                              >
-                                <Eye size={16} />
-                                Ver
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
-                                  window.open(receiptUrl, '_blank');
-                                }}
-                                className="gap-2"
-                              >
-                                <FileText size={16} />
-                                Ver Recibo
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedOrderIdForPrint(order['ID Orden']);
-                                  setPrintDialogOpen(true);
-                                }}
-                                className="gap-2"
-                              >
-                                <Printer size={16} />
-                                Imprimir recibo
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="gap-2">
+                                  <MoreVertical size={16} />
+                                  Opciones
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-popover border-[rgba(255,255,255,0.1)]">
+                                <DropdownMenuItem onClick={() => showDetails(order)} className="cursor-pointer">
+                                  <Eye size={16} className="mr-2" />
+                                  Ver
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                    window.open(receiptUrl, '_blank');
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <FileText size={16} className="mr-2" />
+                                  Ver Recibo
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setSelectedOrderIdForPrint(order['ID Orden']);
+                                    setPrintDialogOpen(true);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Printer size={16} className="mr-2" />
+                                  Imprimir recibo
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
                       );
@@ -940,7 +940,7 @@ const HomeSecretaria = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Dientes seleccionados</Label>
-                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)] whitespace-pre-wrap font-mono text-sm">
                       {selectedOrder['Dientes seleccionados'] || 'N/A'}
                     </div>
                   </div>

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -468,30 +469,36 @@ const ModificarEstados = () => {
                               ))}
                             </SelectContent>
                           </Select>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const receiptUrl = buildReciboUrl(orderId, 'a4');
-                              window.open(receiptUrl, '_blank');
-                            }}
-                            className="gap-2"
-                          >
-                            <FileText size={16} />
-                            Ver Recibo
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOrderIdForPrint(orderId);
-                              setPrintDialogOpen(true);
-                            }}
-                            className="gap-2"
-                          >
-                            <Printer size={16} />
-                            Imprimir recibo
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="gap-2">
+                                <MoreVertical size={16} />
+                                Opciones
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-popover border-[rgba(255,255,255,0.1)]">
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  const receiptUrl = buildReciboUrl(orderId, 'a4');
+                                  window.open(receiptUrl, '_blank');
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <FileText size={16} className="mr-2" />
+                                Ver Recibo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedOrderIdForPrint(orderId);
+                                  setPrintDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Printer size={16} className="mr-2" />
+                                Imprimir recibo
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
