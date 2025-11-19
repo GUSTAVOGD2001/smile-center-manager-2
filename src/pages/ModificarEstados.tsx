@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, DollarSign, Wallet, FileText, Layers } from 'lucide-react';
+import { CalendarIcon, DollarSign, Wallet, Printer, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { buildReciboUrl } from '@/lib/urls';
+import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
 
 interface OrderRow {
   'ID Orden': string;
@@ -56,6 +57,8 @@ const ModificarEstados = () => {
   const [searchOrderId, setSearchOrderId] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<OrderRow[]>([]);
   const [editingACuenta, setEditingACuenta] = useState<{[key: string]: string}>({});
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -469,13 +472,13 @@ const ModificarEstados = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const receiptUrl = buildReciboUrl(orderId, 'a4');
-                              window.open(receiptUrl, '_blank');
+                              setSelectedOrderIdForPrint(orderId);
+                              setPrintDialogOpen(true);
                             }}
                             className="gap-2"
                           >
-                            <FileText size={16} />
-                            Ver Recibo
+                            <Printer size={16} />
+                            Imprimir recibo
                           </Button>
                         </div>
                       </td>
@@ -487,6 +490,12 @@ const ModificarEstados = () => {
           </div>
         </CardContent>
       </Card>
+
+      <PrintReceiptDialog
+        orderId={selectedOrderIdForPrint}
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+      />
     </div>
   );
 };
