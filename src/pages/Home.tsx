@@ -6,6 +6,7 @@ import { Package, CheckCircle, Truck, AlertCircle, Smile, Plus } from 'lucide-re
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import AnaliticaAdmin from './AnaliticaAdmin';
+import HistorialFresados from './HistorialFresados';
 
 interface OrderRow {
   'ID Orden': string;
@@ -109,9 +110,10 @@ const Home = () => {
 
   return (
     <Tabs defaultValue="home" className="space-y-6">
-      <TabsList className="grid w-full max-w-md grid-cols-2">
+      <TabsList className="grid w-full max-w-md grid-cols-3">
         <TabsTrigger value="home">Home</TabsTrigger>
         <TabsTrigger value="analitica">Analítica</TabsTrigger>
+        <TabsTrigger value="fresados">Historial de Fresados</TabsTrigger>
       </TabsList>
 
       <TabsContent value="home" className="space-y-6">
@@ -222,6 +224,10 @@ const Home = () => {
 
       <TabsContent value="analitica">
         <AnaliticaAdmin />
+      </TabsContent>
+
+      <TabsContent value="fresados">
+        <HistorialFresados />
       </TabsContent>
     </Tabs>
   );
