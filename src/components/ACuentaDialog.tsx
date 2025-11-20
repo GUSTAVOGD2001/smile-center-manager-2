@@ -30,33 +30,35 @@ export const ACuentaDialog = ({
   onSuccess,
   onUpdateACuenta
 }: ACuentaDialogProps) => {
-  const [nuevoACuenta, setNuevoACuenta] = useState<string>('');
+  const [montoAAgregar, setMontoAAgregar] = useState<string>('');
   const [metodoPago, setMetodoPago] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setNuevoACuenta(currentACuenta.toString());
+      setMontoAAgregar('');
       setMetodoPago('');
     }
-  }, [open, currentACuenta]);
+  }, [open]);
 
-  const calcularMotivo = (nuevoValor: number): string => {
-    if (nuevoValor === costo) return 'Liquido';
-    if (nuevoValor < costo) return 'Abono';
+  const calcularMotivo = (nuevoTotal: number): string => {
+    if (nuevoTotal === costo) return 'Liquido';
+    if (nuevoTotal < costo) return 'Abono';
     return '';
   };
 
   const handleSubmit = async () => {
-    const valorNumerico = parseFloat(nuevoACuenta);
+    const montoNumerico = parseFloat(montoAAgregar);
 
-    if (isNaN(valorNumerico) || valorNumerico < 0) {
-      toast.error('Por favor ingrese un valor numérico válido');
+    if (isNaN(montoNumerico) || montoNumerico <= 0) {
+      toast.error('Por favor ingrese un monto válido mayor a 0');
       return;
     }
 
-    if (valorNumerico > costo) {
-      toast.error('El monto A Cuenta no puede ser mayor que el costo total');
+    const nuevoTotal = currentACuenta + montoNumerico;
+
+    if (nuevoTotal > costo) {
+      toast.error('El monto total no puede ser mayor que el costo');
       return;
     }
 
@@ -65,66 +67,57 @@ export const ACuentaDialog = ({
       return;
     }
 
-    const diferencia = valorNumerico - currentACuenta;
-
-    if (diferencia === 0) {
-      toast.error('El nuevo valor es igual al actual');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // 1. Actualizar A Cuenta
-      await onUpdateACuenta(orderId, nuevoACuenta);
+      // 1. Crear ingreso con el monto agregado
+      const motivo = calcularMotivo(nuevoTotal);
+      const fechaActual = new Date().toISOString().split('T')[0];
 
-      // 2. Crear ingreso solo si hubo un incremento
-      if (diferencia > 0) {
-        const motivo = calcularMotivo(valorNumerico);
-        const fechaActual = new Date().toISOString().split('T')[0];
+      const payload = {
+        apiKey: API_KEY,
+        idOrden: orderId,
+        fecha: fechaActual,
+        monto: montoNumerico,
+        metodoPago: metodoPago,
+        motivo: motivo
+      };
 
-        const payload = {
-          apiKey: API_KEY,
-          idOrden: orderId,
-          fecha: fechaActual,
-          monto: diferencia,
-          metodoPago: metodoPago,
-          motivo: motivo
-        };
+      const res = await fetch(API_URL_POST, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      });
 
-        const res = await fetch(API_URL_POST, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          throw new Error('Error al crear el ingreso');
-        }
+      if (!res.ok) {
+        throw new Error('Error al crear el ingreso');
       }
 
-      toast.success('A Cuenta actualizado correctamente');
+      // 2. Actualizar A Cuenta con el nuevo total
+      await onUpdateACuenta(orderId, nuevoTotal.toString());
+
+      toast.success('Monto agregado correctamente');
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error:', error);
-      toast.error(error.message || 'Error al actualizar A Cuenta');
+      toast.error(error.message || 'Error al agregar monto');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const valorNumerico = parseFloat(nuevoACuenta) || 0;
-  const motivo = valorNumerico > 0 && valorNumerico <= costo ? calcularMotivo(valorNumerico) : '';
-  const diferencia = valorNumerico - currentACuenta;
+  const montoNumerico = parseFloat(montoAAgregar) || 0;
+  const nuevoTotal = currentACuenta + montoNumerico;
+  const motivo = montoNumerico > 0 && nuevoTotal <= costo ? calcularMotivo(nuevoTotal) : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-background border-[rgba(255,255,255,0.1)]">
         <DialogHeader>
-          <DialogTitle>Modificar A Cuenta</DialogTitle>
+          <DialogTitle>Agregar Monto a A Cuenta</DialogTitle>
           <DialogDescription>
             Orden: {orderId} | Costo Total: ${costo.toFixed(2)}
           </DialogDescription>
@@ -143,21 +136,30 @@ export const ACuentaDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="nuevoACuenta">Nuevo A Cuenta *</Label>
+            <Label htmlFor="montoAAgregar">Monto a Agregar *</Label>
             <Input
-              id="nuevoACuenta"
+              id="montoAAgregar"
               type="number"
-              min="0"
+              min="0.01"
               step="0.01"
-              value={nuevoACuenta}
-              onChange={(e) => setNuevoACuenta(e.target.value)}
+              value={montoAAgregar}
+              onChange={(e) => setMontoAAgregar(e.target.value)}
               className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
               placeholder="0.00"
             />
-            {valorNumerico > costo && (
-              <p className="text-sm text-red-500">El monto no puede ser mayor que el costo</p>
+            {nuevoTotal > costo && (
+              <p className="text-sm text-red-500">El total excede el costo</p>
             )}
           </div>
+
+          {montoNumerico > 0 && (
+            <div className="grid gap-2">
+              <Label>Nuevo Total A Cuenta</Label>
+              <div className={`text-sm p-2 rounded ${nuevoTotal <= costo ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                ${currentACuenta.toFixed(2)} + ${montoNumerico.toFixed(2)} = ${nuevoTotal.toFixed(2)}
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-2">
             <Label htmlFor="metodoPago">Método de Pago *</Label>
@@ -175,14 +177,6 @@ export const ACuentaDialog = ({
             </Select>
           </div>
 
-          {diferencia !== 0 && (
-            <div className="grid gap-2">
-              <Label>Diferencia</Label>
-              <div className={`text-sm p-2 rounded ${diferencia > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                {diferencia > 0 ? '+' : ''}{diferencia.toFixed(2)}
-              </div>
-            </div>
-          )}
 
           {motivo && (
             <div className="grid gap-2">
@@ -207,9 +201,9 @@ export const ACuentaDialog = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || valorNumerico > costo || !metodoPago || diferencia === 0}
+            disabled={isSubmitting || nuevoTotal > costo || !metodoPago || montoNumerico <= 0}
           >
-            {isSubmitting ? 'Guardando...' : 'Guardar'}
+            {isSubmitting ? 'Guardando...' : 'Agregar'}
           </Button>
         </DialogFooter>
       </DialogContent>
