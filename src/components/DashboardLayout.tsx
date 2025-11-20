@@ -1,4 +1,4 @@
-import { Home, Tag, LogOut, Settings, Search, Package, ArrowDownCircle, ArrowUpCircle, Calendar, ListTodo, Users } from 'lucide-react';
+import { Home, Tag, LogOut, Settings, Search, Package, ArrowDownCircle, ArrowUpCircle, Calendar, ListTodo, Users, ClipboardList } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/calendario', label: 'Calendario', icon: Calendar },
     { path: '/modificar-estados', label: 'Modificar estados', icon: Tag },
+    { path: '/historial-fresados', label: 'Historial de Fresados', icon: ClipboardList },
     { path: '/inventario', label: 'Inventario', icon: Package },
     { path: '/finanzas', label: 'Egresos', icon: ArrowDownCircle },
     { path: '/ingresos', label: 'Ingresos', icon: ArrowUpCircle },

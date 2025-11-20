@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Home from "./pages/Home";
 import Calendario from "./pages/Calendario";
 import ModificarEstados from "./pages/ModificarEstados";
+import HistorialFresados from "./pages/HistorialFresados";
 import Configuracion from "./pages/Configuracion";
 import Inventario from "./pages/Inventario";
 import Finanzas from "./pages/Finanzas";
@@ -121,6 +122,18 @@ const App = () => (
                   <AdminRoute>
                     <DashboardLayout>
                       <ModificarEstados />
+                    </DashboardLayout>
+                  </AdminRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/historial-fresados"
+              element={
+                <AuthGuard>
+                  <AdminRoute>
+                    <DashboardLayout>
+                      <HistorialFresados />
                     </DashboardLayout>
                   </AdminRoute>
                 </AuthGuard>
