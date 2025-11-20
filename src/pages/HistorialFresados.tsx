@@ -39,10 +39,19 @@ const HistorialFresados = () => {
     try {
       const response = await fetch('https://script.google.com/macros/s/AKfycbxeNTiBOeTTuhMaPzZ9oMVQ3JlzeYEaCqjygo_0JpEIwdNd4bn3ZwhJXSvBTSzjwihIkA/exec');
       const data = await response.json();
-      setFresados(data.rows || []);
+      console.log('API Response:', data);
+      console.log('Data type:', typeof data);
+      console.log('Data keys:', Object.keys(data));
+      console.log('Data.rows:', data.rows);
+      console.log('Data length if array:', Array.isArray(data) ? data.length : 'not an array');
+      
+      // Si data es directamente un array, usarlo. Si tiene propiedad rows, usar esa
+      const rowsData = Array.isArray(data) ? data : (data.rows || []);
+      console.log('Rows to set:', rowsData);
+      setFresados(rowsData);
     } catch (error) {
       toast.error('Error al cargar el historial de fresados');
-      console.error(error);
+      console.error('Error fetching fresados:', error);
     } finally {
       setIsLoading(false);
     }
