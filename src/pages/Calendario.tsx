@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, AlertCircle, Pencil, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+
+// 👇 TU NUEVA URL DE APPS SCRIPT YA CONFIGURADA
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyP-AXqFrCCrqt6sn5BIAFHm---nTyYV1j9kr_OQ8_yFDz8z3iErScR5Rl5aIw0PK4E/exec';
+const API_KEY = '123Tamarindo';
 
 interface Event {
   id: string;
@@ -23,15 +23,20 @@ interface Event {
   notes: string | null;
 }
 
-const Calendario = () => {
+// Propiedad para distinguir si es Gerente o Admin
+interface CalendarioProps {
+  isGerente?: boolean;
+}
+
+const Calendario = ({ isGerente = false }: CalendarioProps) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEventListOpen, setIsEventListOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -41,61 +46,58 @@ const Calendario = () => {
     notes: '',
   });
 
-  const currentMonth = new Date().getMonth();
-  const today = new Date();
-
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
   const fetchEvents = async () => {
-    const { data, error } = await (supabase as any)
-      .from('events')
-      .select('*')
-      .order('date', { ascending: true });
+    try {
+      const response = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'calendar.list', apiKey: API_KEY })
+      });
+      const result = await response.json();
+      
+      if (result.ok && Array.isArray(result.data)) {
+        let loadedEvents = result.data;
+        
+        // --- FILTRO DE VISUALIZACIÓN ---
+        if (isGerente) {
+          // Gerente solo ve eventos 'EveI-'
+          loadedEvents = loadedEvents.filter((e: Event) => e.id.startsWith('EveI-'));
+        } else {
+           // Admin ve eventos 'Eve-' (Si quieres que admin vea TODO, borra este else)
+           loadedEvents = loadedEvents.filter((e: Event) => e.id.startsWith('Eve-'));
+        }
 
-    if (error) {
-      toast.error('Error al cargar eventos');
-      console.error(error);
-    } else {
-      setEvents(data || []);
+        // Normalizar fechas
+        const formattedEvents = loadedEvents.map((e: any) => ({
+          ...e,
+          date: e.date ? e.date.substring(0, 10) : '',
+          recurring_day: e.recurring_day ? Number(e.recurring_day) : null
+        }));
+        
+        setEvents(formattedEvents);
+      }
+    } catch (error) {
+      toast.error('Error de conexión al cargar eventos');
     }
   };
 
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const upcomingEvents = useMemo(() => {
-    const todayStr = format(today, 'yyyy-MM-dd');
-    return events
-      .filter(event => event.date >= todayStr)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 10);
-  }, [events]);
+  const getDaysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
   const getEventsForDay = (day: number, month: number) => {
     const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.filter(event => event.date === dateStr);
-  };
-
-  const hasEvent = (day: number, month: number) => {
-    const dayEvents = getEventsForDay(day, month);
-    return dayEvents.length > 0 ? dayEvents[0] : null;
+    return events.filter(event => {
+      if (event.is_recurring) return event.recurring_day === day;
+      return event.date === dateStr;
+    });
   };
 
   const handleDayClick = (day: number, month: number) => {
-    const date = new Date(selectedYear, month, day);
-    setSelectedDate(date);
     const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayEvents = getEventsForDay(day, month);
     
@@ -103,517 +105,203 @@ const Calendario = () => {
       setSelectedDayEvents(dayEvents);
       setIsEventListOpen(true);
     } else {
-      setFormData({ title: '', date: dateStr, is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
-      setEditingEventId(null);
+      resetForm();
+      setFormData(prev => ({ ...prev, date: dateStr, recurring_day: day }));
       setIsDialogOpen(true);
     }
   };
 
-  const handleEditEvent = (event: Event) => {
-    setFormData({
-      title: event.title,
-      date: event.date,
-      is_important: event.is_important,
-      is_recurring: event.is_recurring,
-      recurring_day: event.recurring_day || 1,
-      notes: event.notes || '',
-    });
-    setEditingEventId(event.id);
-    setIsEventListOpen(false);
-    setIsDialogOpen(true);
-  };
-
-  const handleDeleteEvent = async () => {
-    if (!deletingEventId) return;
-
-    const { error } = await (supabase as any)
-      .from('events')
-      .delete()
-      .eq('id', deletingEventId);
-
-    if (error) {
-      toast.error('Error al eliminar evento');
-      console.error(error);
-    } else {
-      toast.success('Evento eliminado exitosamente');
-      setDeletingEventId(null);
-      fetchEvents();
-      setIsEventListOpen(false);
-    }
+  const resetForm = () => {
+    setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
+    setEditingEventId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.title) {
-      toast.error('Por favor completa el título');
-      return;
-    }
-
-    if (formData.is_recurring && !formData.recurring_day) {
-      toast.error('Por favor selecciona el día del mes');
-      return;
-    }
-
-    if (!formData.is_recurring && !formData.date) {
-      toast.error('Por favor selecciona una fecha');
-      return;
-    }
-
+    
+    // --- LÓGICA DE ROLES ---
+    let action = 'calendar.create'; // Por defecto Admin (Eve-)
+    
     if (editingEventId) {
-      const { error } = await (supabase as any)
-        .from('events')
-        .update({
-          title: formData.title,
-          date: formData.date,
-          is_important: formData.is_important,
-          is_recurring: formData.is_recurring,
-          recurring_day: formData.is_recurring ? formData.recurring_day : null,
-          notes: formData.notes || null,
-        })
-        .eq('id', editingEventId);
+        action = 'calendar.update';
+    } else if (isGerente) {
+        action = 'calendar.create.gerente'; // Acción especial Gerente (EveI-)
+    }
 
-      if (error) {
-        toast.error('Error al actualizar evento');
-        console.error(error);
-      } else {
-        toast.success('Evento actualizado exitosamente');
+    const payload = {
+      action,
+      apiKey: API_KEY,
+      id: editingEventId,
+      ...formData
+    };
+
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      
+      if (result.ok) {
+        toast.success(editingEventId ? 'Evento actualizado' : 'Evento creado');
         setIsDialogOpen(false);
-        setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
-        setEditingEventId(null);
+        resetForm();
+        fetchEvents();
+      } else {
+        toast.error('Error: ' + result.error);
+      }
+    } catch (err) {
+      toast.error('Error de red al guardar');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingEventId) return;
+    try {
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'calendar.delete', apiKey: API_KEY, id: deletingEventId })
+      });
+      if ((await res.json()).ok) {
+        toast.success('Eliminado');
+        setDeletingEventId(null);
+        setIsEventListOpen(false);
         fetchEvents();
       }
-    } else {
-      // Si es recurrente, crear eventos para todos los meses del año
-      if (formData.is_recurring) {
-        const eventsToInsert = [];
-        for (let month = 0; month < 12; month++) {
-          const daysInMonth = getDaysInMonth(month, selectedYear);
-          // Solo crear el evento si el día existe en ese mes
-          if (formData.recurring_day <= daysInMonth) {
-            const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(formData.recurring_day).padStart(2, '0')}`;
-            eventsToInsert.push({
-              title: formData.title,
-              date: dateStr,
-              is_important: formData.is_important,
-              is_recurring: true,
-              recurring_day: formData.recurring_day,
-              notes: formData.notes || null,
-            });
-          }
-        }
-
-        const { error } = await (supabase as any)
-          .from('events')
-          .insert(eventsToInsert);
-
-        if (error) {
-          toast.error('Error al crear eventos recurrentes');
-          console.error(error);
-        } else {
-          toast.success(`${eventsToInsert.length} eventos recurrentes creados exitosamente`);
-          setIsDialogOpen(false);
-          setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
-          fetchEvents();
-        }
-      } else {
-        const { error } = await (supabase as any)
-          .from('events')
-          .insert([{
-            title: formData.title,
-            date: formData.date,
-            is_important: formData.is_important,
-            is_recurring: false,
-            recurring_day: null,
-            notes: formData.notes || null,
-          }]);
-
-        if (error) {
-          toast.error('Error al crear evento');
-          console.error(error);
-        } else {
-          toast.success('Evento creado exitosamente');
-          setIsDialogOpen(false);
-          setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
-          fetchEvents();
-        }
-      }
-    }
+    } catch (e) { toast.error('Error al eliminar'); }
   };
 
   const renderMonth = (monthIndex: number) => {
     const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
     const firstDay = getFirstDayOfMonth(monthIndex, selectedYear);
     const days = [];
-    const isPastMonth = selectedYear < today.getFullYear() || 
-                        (selectedYear === today.getFullYear() && monthIndex < currentMonth);
-
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} />);
-    }
-
-    // Add days of the month
+    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} />);
+    
     for (let day = 1; day <= daysInMonth; day++) {
-      const event = hasEvent(day, monthIndex);
-      const isPastDay = isPastMonth || 
-                        (selectedYear === today.getFullYear() && monthIndex === currentMonth && day < today.getDate());
+      const dayEvents = getEventsForDay(day, monthIndex);
+      const hasEv = dayEvents.length > 0;
+      const isImp = dayEvents.some(e => e.is_important);
+      const isRec = dayEvents.some(e => e.is_recurring);
+      
+      let bgClass = 'bg-secondary hover:bg-secondary/80';
+      if (hasEv) {
+          if (isImp) bgClass = 'bg-destructive text-white hover:bg-destructive/90';
+          else if (isRec) bgClass = 'bg-blue-600 text-white hover:bg-blue-700';
+          else bgClass = 'bg-green-600 text-white hover:bg-green-700';
+      }
       
       days.push(
-        <button
-          key={day}
-          onClick={() => handleDayClick(day, monthIndex)}
-          className={`
-            w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
-            transition-all duration-200 hover:scale-110
-            ${isPastDay 
-              ? 'bg-muted/30 text-muted-foreground/50' 
-              : event 
-                ? event.is_recurring
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : event.is_important 
-                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }
-          `}
-        >
+        <button key={day} onClick={() => handleDayClick(day, monthIndex)} className={`${bgClass} w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center text-xs lg:text-sm font-medium transition-all hover:scale-110`}>
           {day}
         </button>
       );
     }
-
     return days;
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Calendario
-            </h1>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setSelectedYear(selectedYear - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-2xl font-semibold min-w-[80px] text-center">{selectedYear}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setSelectedYear(selectedYear + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <p className="text-muted-foreground mt-2">Gestiona eventos y fechas importantes</p>
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus size={18} />
-              Añadir Evento
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingEventId ? 'Editar Evento' : 'Nuevo Evento'}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Título del evento"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="recurring"
-                  checked={formData.is_recurring}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, is_recurring: checked as boolean })
-                  }
-                />
-                <Label htmlFor="recurring" className="flex items-center gap-2 cursor-pointer">
-                  Evento recurrente (se repite cada mes)
-                </Label>
-              </div>
-
-              {formData.is_recurring ? (
-                <div>
-                  <Label htmlFor="recurring_day">Día del mes *</Label>
-                  <Input
-                    id="recurring_day"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.recurring_day}
-                    onChange={(e) => setFormData({ ...formData, recurring_day: parseInt(e.target.value) })}
-                    placeholder="Día del mes (1-31)"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    El evento se creará en todos los meses del año {selectedYear} en el día {formData.recurring_day}
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="date">Fecha *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="important"
-                  checked={formData.is_important}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, is_important: checked as boolean })
-                  }
-                />
-                <Label htmlFor="important" className="flex items-center gap-2 cursor-pointer">
-                  <AlertCircle size={16} className="text-destructive" />
-                  Marcar como importante
-                </Label>
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Notas</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Notas adicionales..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => {
-                  setIsDialogOpen(false);
-                  setEditingEventId(null);
-                  setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
-                }}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  {editingEventId ? 'Actualizar Evento' : 'Guardar Evento'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Event List Dialog */}
-        <Dialog open={isEventListOpen} onOpenChange={setIsEventListOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Eventos del día</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              {selectedDayEvents.map((event) => (
-                <Card key={event.id} className="glass-card border-[rgba(255,255,255,0.1)]">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{event.title}</h3>
-                          {event.is_important && (
-                            <AlertCircle size={16} className="text-destructive" />
-                          )}
-                        </div>
-                        {event.notes && (
-                          <p className="text-sm text-muted-foreground">{event.notes}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleEditEvent(event)}
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDeletingEventId(event.id)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button
-                className="w-full gap-2"
-                onClick={() => {
-                  setIsEventListOpen(false);
-                  setFormData({ 
-                    title: '', 
-                    date: selectedDayEvents[0]?.date || '', 
-                    is_important: false,
-                    is_recurring: false,
-                    recurring_day: 1,
-                    notes: '' 
-                  });
-                  setEditingEventId(null);
-                  setIsDialogOpen(true);
-                }}
-              >
-                <Plus size={18} />
-                Añadir otro evento
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={!!deletingEventId} onOpenChange={() => setDeletingEventId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar evento?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta acción no se puede deshacer. El evento será eliminado permanentemente.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteEvent}>
-                Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+    <div className="space-y-6 pb-10">
+      <div className="flex justify-between items-center">
+         <h1 className="text-3xl font-bold text-primary">{isGerente ? 'Calendario Gerente' : 'Calendario Admin'}</h1>
+         <div className="flex gap-2 items-center">
+            <Button variant="ghost" onClick={() => setSelectedYear(y => y - 1)}><ChevronLeft /></Button>
+            <span className="text-xl font-bold">{selectedYear}</span>
+            <Button variant="ghost" onClick={() => setSelectedYear(y => y + 1)}><ChevronRight /></Button>
+         </div>
+      </div>
+      
+      <div className="flex justify-end mb-4">
+         <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="gap-2"><Plus size={18}/> Añadir Evento</Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Legend */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-          <CardHeader>
-            <CardTitle className="text-lg">Leyenda</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-muted" />
-              <span className="text-sm">Sin evento</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary" />
-              <span className="text-sm">Evento normal</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-500" />
-              <span className="text-sm">Evento recurrente</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-destructive" />
-              <span className="text-sm">Evento importante</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card className="glass-card border-[rgba(255,255,255,0.1)] lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              Próximos Eventos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No hay eventos próximos</p>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{event.title}</h4>
-                        {event.is_important && (
-                          <AlertCircle size={14} className="text-destructive" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(event.date), "d 'de' MMMM 'de' yyyy", { locale: es })}
-                      </p>
-                      {event.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">{event.notes}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => handleEditEvent(event)}
-                      >
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => setDeletingEventId(event.id)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Year Calendar Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {monthNames.map((monthName, monthIndex) => (
-          <Card key={monthIndex} className="glass-card border-[rgba(255,255,255,0.1)]">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-center">{monthName}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1 text-xs text-muted-foreground mb-2 text-center">
-                <div>D</div>
-                <div>L</div>
-                <div>M</div>
-                <div>M</div>
-                <div>J</div>
-                <div>V</div>
-                <div>S</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {monthNames.map((month, idx) => (
+          <Card key={month} className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader className="p-4"><CardTitle className="text-center">{month}</CardTitle></CardHeader>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-7 gap-1 text-center mb-2 text-xs text-muted-foreground">
+                <div>D</div><div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div>
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {renderMonth(monthIndex)}
+                {renderMonth(idx)}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+      
+      {/* Modal Crear/Editar */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editingEventId ? 'Editar' : 'Nuevo'} Evento</DialogTitle></DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+               <div className="space-y-2">
+                 <Label>Título</Label>
+                 <Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required className="bg-secondary/50" />
+               </div>
+               
+               <div className="flex items-center space-x-2 p-2 border rounded bg-secondary/20">
+                 <Checkbox id="rec" checked={formData.is_recurring} onCheckedChange={(c) => setFormData({...formData, is_recurring: !!c})} />
+                 <Label htmlFor="rec">Evento recurrente (se repite cada mes)</Label>
+               </div>
+
+               {formData.is_recurring ? (
+                 <div className="space-y-2">
+                   <Label>Día del mes (1-31)</Label>
+                   <Input type="number" min="1" max="31" value={formData.recurring_day} onChange={e => setFormData({...formData, recurring_day: parseInt(e.target.value)})} required className="bg-secondary/50"/>
+                 </div>
+               ) : (
+                 <div className="space-y-2">
+                   <Label>Fecha</Label>
+                   <Input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required className="bg-secondary/50"/>
+                 </div>
+               )}
+
+               <div className="flex items-center space-x-2 mt-2">
+                 <Checkbox id="imp" checked={formData.is_important} onCheckedChange={(c) => setFormData({...formData, is_important: !!c})} />
+                 <Label htmlFor="imp" className="text-destructive font-bold cursor-pointer">Marcar como Importante</Label>
+               </div>
+               
+               <div className="space-y-2">
+                   <Label>Notas</Label>
+                   <Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-secondary/50" />
+               </div>
+               
+               <Button type="submit" className="w-full mt-4">Guardar Evento</Button>
+            </form>
+          </DialogContent>
+      </Dialog>
+
+      {/* Modal Lista Eventos */}
+      <Dialog open={isEventListOpen} onOpenChange={setIsEventListOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Eventos del día</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+             {selectedDayEvents.map(ev => (
+               <div key={ev.id} className="flex justify-between items-center p-3 border border-[rgba(255,255,255,0.1)] rounded-lg bg-secondary/30">
+                  <div>
+                    <p className="font-bold">{ev.title}</p>
+                    <p className="text-xs text-muted-foreground flex gap-2">
+                        <span>{ev.id}</span>
+                        {ev.is_recurring && <span className="text-blue-400">(Recurrente)</span>}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost" onClick={() => { 
+                        setFormData({ 
+                            title: ev.title, date: ev.date, is_important: ev.is_important, 
+                            is_recurring: ev.is_recurring, recurring_day: ev.recurring_day || 1, notes: ev.notes || '' 
+                        });
+                        setEditingEventId(ev.id); setIsEventListOpen(false); setIsDialogOpen(true); 
+                    }}><Pencil size={16}/></Button>
+                    <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/20" onClick={() => { setDeletingEventId(ev.id); handleDelete(); }}><Trash2 size={16}/></Button>
+                  </div>
+               </div>
+             ))}
+             <Button variant="outline" className="w-full mt-4" onClick={() => { setIsEventListOpen(false); resetForm(); setIsDialogOpen(true); }}>+ Añadir otro evento</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

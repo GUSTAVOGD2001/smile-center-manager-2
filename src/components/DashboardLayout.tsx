@@ -44,6 +44,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const gerenteNavItems = [
     { path: '/home-gerente', label: 'Inicio', icon: Home },
+    { path: '/gerente/calendario', label: 'Calendario', icon: Calendar },
   ];
 
   const navItems = isAdmin() 
