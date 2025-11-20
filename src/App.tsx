@@ -221,6 +221,19 @@ const App = () => (
               }
             />
             <Route
+              path="/gerente/calendario"
+              element={
+                <AuthGuard>
+                  <GerenteRoute>
+                    <DashboardLayout>
+                      {/* isGerente={true} activa el prefijo EveI- y la acción create.gerente */}
+                      <Calendario isGerente={true} />
+                    </DashboardLayout>
+                  </GerenteRoute>
+                </AuthGuard>
+              }
+            />
+            <Route
               path="/evidencias"
               element={
                 <AuthGuard>
