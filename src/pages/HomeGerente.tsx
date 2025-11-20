@@ -20,6 +20,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IngresosDentomex from './IngresosDentomex';
 import EgresosDentomex from './EgresosDentomex';
+import CalendarioGerente from './CalendarioGerente';
+import PendientesGerente from './PendientesGerente';
 
 interface OrderRow {
   'ID Orden': string;
@@ -380,12 +382,14 @@ const HomeGerente = () => {
 
   return (
     <Tabs defaultValue="diseñador" className="space-y-6">
-      <TabsList className="grid w-full max-w-2xl grid-cols-5">
+      <TabsList className="grid w-full max-w-3xl grid-cols-7">
         <TabsTrigger value="diseñador">Inicio</TabsTrigger>
         <TabsTrigger value="dentomex">Dentomex</TabsTrigger>
         <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
         <TabsTrigger value="ingresos-dentomex">Ingresos Dentomex</TabsTrigger>
         <TabsTrigger value="egresos-dentomex">Egresos Dentomex</TabsTrigger>
+        <TabsTrigger value="calendario">Calendario</TabsTrigger>
+        <TabsTrigger value="pendientes">Pendientes</TabsTrigger>
       </TabsList>
 
       {/* Tab de Inicio (Diseñador) */}
@@ -937,6 +941,16 @@ const HomeGerente = () => {
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
       />
+
+      {/* Tab de Calendario */}
+      <TabsContent value="calendario">
+        <CalendarioGerente />
+      </TabsContent>
+
+      {/* Tab de Pendientes */}
+      <TabsContent value="pendientes">
+        <PendientesGerente />
+      </TabsContent>
     </Tabs>
   );
 };
