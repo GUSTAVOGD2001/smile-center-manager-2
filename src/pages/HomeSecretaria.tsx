@@ -818,29 +818,40 @@ const HomeSecretaria = () => {
                           </Select>
                         </td>
                         <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => showDetails(order)}
-                              className="gap-2"
-                            >
-                              <Eye size={16} />
-                              Ver Detalles
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
-                                window.open(receiptUrl, '_blank');
-                              }}
-                              className="gap-2"
-                            >
-                              <FileText size={16} />
-                              Ver Recibo
-                            </Button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-2">
+                                <MoreVertical size={16} />
+                                Opciones
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-popover border-[rgba(255,255,255,0.1)]">
+                              <DropdownMenuItem onClick={() => showDetails(order)} className="cursor-pointer">
+                                <Eye size={16} className="mr-2" />
+                                Ver
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                  window.open(receiptUrl, '_blank');
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <FileText size={16} className="mr-2" />
+                                Ver Recibo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedOrderIdForPrint(order['ID Orden']);
+                                  setPrintDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Printer size={16} className="mr-2" />
+                                Imprimir recibo
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}
