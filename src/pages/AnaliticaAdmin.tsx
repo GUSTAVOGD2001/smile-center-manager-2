@@ -44,10 +44,13 @@ const AnaliticaAdmin = () => {
     }
   };
 
-  // Calculate frequency of work types
+  // Calculate frequency of work types (excluding "sin especificar")
   const workTypeFrequency = orders.reduce((acc: { [key: string]: number }, order) => {
-    const workType = order['Tipo de Trabajo'] || 'Sin especificar';
-    acc[workType] = (acc[workType] || 0) + 1;
+    const workType = order['Tipo de Trabajo'];
+    // Exclude empty, undefined, or "sin especificar" values
+    if (workType && workType.trim() !== '' && workType.toLowerCase() !== 'sin especificar') {
+      acc[workType] = (acc[workType] || 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -56,10 +59,13 @@ const AnaliticaAdmin = () => {
     value,
   }));
 
-  // Calculate frequency of materials
+  // Calculate frequency of materials (excluding "sin especificar")
   const materialFrequency = orders.reduce((acc: { [key: string]: number }, order) => {
-    const material = order['Material'] || 'Sin especificar';
-    acc[material] = (acc[material] || 0) + 1;
+    const material = order['Material'];
+    // Exclude empty, undefined, or "sin especificar" values
+    if (material && material.trim() !== '' && material.toLowerCase() !== 'sin especificar') {
+      acc[material] = (acc[material] || 0) + 1;
+    }
     return acc;
   }, {});
 
