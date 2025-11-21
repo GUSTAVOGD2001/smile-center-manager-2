@@ -533,6 +533,7 @@ const HistorialFresados = () => {
                       <TableHead>Tipo de Trabajo</TableHead>
                       <TableHead>Material</TableHead>
                       <TableHead>Disco</TableHead>
+                      <TableHead>Unidades</TableHead>
                       <TableHead>N. Fresadora</TableHead>
                       <TableHead>Dx</TableHead>
                       <TableHead>C.R</TableHead>
@@ -549,6 +550,7 @@ const HistorialFresados = () => {
                         <TableCell>{getTipoTrabajo(row)}</TableCell>
                         <TableCell>{getMaterial(row.Disco)}</TableCell>
                         <TableCell>{row.Disco || '-'}</TableCell>
+                        <TableCell>{row.Unidades || '-'}</TableCell>
                         <TableCell>{row.FR || '-'}</TableCell>
                         <TableCell>{row.Dx || '-'}</TableCell>
                         <TableCell>{row['C.R'] || '-'}</TableCell>
