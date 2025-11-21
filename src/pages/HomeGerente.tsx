@@ -382,13 +382,12 @@ const HomeGerente = () => {
 
   return (
     <Tabs defaultValue="diseñador" className="space-y-6">
-      <TabsList className="grid w-full max-w-3xl grid-cols-7">
+      <TabsList className="grid w-full max-w-3xl grid-cols-6">
         <TabsTrigger value="diseñador">Inicio</TabsTrigger>
         <TabsTrigger value="dentomex">Dentomex</TabsTrigger>
         <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
-        <TabsTrigger value="ingresos-dentomex">Ingresos Dentomex</TabsTrigger>
-        <TabsTrigger value="egresos-dentomex">Egresos Dentomex</TabsTrigger>
-        <TabsTrigger value="calendario">Calendario</TabsTrigger>
+        <TabsTrigger value="ingresos-dentomex">Ingresos D</TabsTrigger>
+        <TabsTrigger value="egresos-dentomex">Egresos D</TabsTrigger>
         <TabsTrigger value="pendientes">Pendientes</TabsTrigger>
       </TabsList>
 
@@ -941,11 +940,6 @@ const HomeGerente = () => {
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
       />
-
-      {/* Tab de Calendario */}
-      <TabsContent value="calendario">
-        <CalendarioGerente />
-      </TabsContent>
 
       {/* Tab de Pendientes */}
       <TabsContent value="pendientes">
