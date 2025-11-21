@@ -171,12 +171,24 @@ const HomeGerente = () => {
       console.log('📊 Data structure check - has rows?:', data?.rows);
       console.log('📊 Is array directly?:', Array.isArray(data));
       
-      // Try to handle both possible formats: {ok: true, rows: [...]} or just [...]
       let sourceRows: OrderRow[] = [];
       if (Array.isArray(data?.rows)) {
         sourceRows = data.rows as OrderRow[];
       } else if (Array.isArray(data)) {
         sourceRows = data as OrderRow[];
+      } else if (data && typeof data === 'object') {
+        const possibleKey = Object.keys(data).find((key) => {
+          const value = (data as any)[key];
+          return Array.isArray(value) &&
+            value.length > 0 &&
+            typeof value[0] === 'object' &&
+            'ID Orden' in value[0];
+        });
+
+        if (possibleKey) {
+          sourceRows = (data as any)[possibleKey] as OrderRow[];
+          console.log('📊 Rows found under key:', possibleKey, 'length:', sourceRows.length);
+        }
       }
       
       console.log('📊 Final sourceRows length:', sourceRows.length);
