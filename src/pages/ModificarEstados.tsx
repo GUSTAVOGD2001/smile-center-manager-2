@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers, MoreVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -72,6 +74,7 @@ const ModificarEstados = () => {
   const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
   const [aCuentaDialogOpen, setACuentaDialogOpen] = useState(false);
   const [selectedOrderForACuenta, setSelectedOrderForACuenta] = useState<OrderRow | null>(null);
+  const [filterFresadas, setFilterFresadas] = useState<'all' | 'fresadas' | 'noFresadas'>('all');
 
   useEffect(() => {
     fetchOrders();
@@ -197,6 +200,15 @@ const ModificarEstados = () => {
 
   const ordenesFresadas = filteredOrders.filter(order => isOrderFresado(order['ID Orden']));
   const ordenesNoFresadas = filteredOrders.filter(order => !isOrderFresado(order['ID Orden']));
+
+  const filteredOrdersByFresado = filteredOrders.filter(order => {
+    const orderId = order['ID Orden'];
+    const isFresado = isOrderFresado(orderId);
+    
+    if (filterFresadas === 'fresadas') return isFresado;
+    if (filterFresadas === 'noFresadas') return !isFresado;
+    return true; // 'all'
+  });
 
   const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
     const orderId = order['ID Orden'];
@@ -664,10 +676,29 @@ const ModificarEstados = () => {
                       setDateTo(undefined);
                       setSearchName('');
                       setSearchOrderId('');
+                      setFilterFresadas('all');
                     }}
                   >
                     Limpiar Filtros
                   </Button>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="fresadas-switch"
+                      checked={filterFresadas === 'fresadas'}
+                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'fresadas' : 'all')}
+                    />
+                    <Label htmlFor="fresadas-switch" className="cursor-pointer">Solo Fresadas</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="no-fresadas-switch"
+                      checked={filterFresadas === 'noFresadas'}
+                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'noFresadas' : 'all')}
+                    />
+                    <Label htmlFor="no-fresadas-switch" className="cursor-pointer">Solo No Fresadas</Label>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -717,7 +748,7 @@ const ModificarEstados = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredOrders.map((order, idx) => {
+                    {filteredOrdersByFresado.map((order, idx) => {
                       const orderId = order['ID Orden'];
                       const isFresado = isOrderFresado(orderId);
                       const piezasFresadas = getPiezasFresadas(orderId);

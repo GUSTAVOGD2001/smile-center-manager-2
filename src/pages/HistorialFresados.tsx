@@ -13,6 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
 interface FresadoRow {
   'ID Orden': string;
@@ -174,6 +175,23 @@ const HistorialFresados = () => {
   }, [] as Array<{ name: string; value: number }>);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d'];
+
+  // Calcular unidades por garantía
+  const unidadesPorGarantia = filteredFresados.reduce((sum, row) => {
+    const motivo = (row['Motivo de la rep'] || '').toLowerCase();
+    if (motivo.includes('garantia')) {
+      return sum + (Number(row.Unidades) || 0);
+    }
+    return sum;
+  }, 0);
+
+  // Calcular unidades rotas (rep x. unidad === true)
+  const unidadesRotas = filteredFresados.reduce((sum, row) => {
+    if (row['rep x. unidad'] === true) {
+      return sum + (Number(row.Unidades) || 0);
+    }
+    return sum;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -458,6 +476,28 @@ const HistorialFresados = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Tarjetas de resumen */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Unidades por Garantía</CardTitle>
+                <ShieldAlert className="h-5 w-5 text-blue-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{unidadesPorGarantia}</div>
+              </CardContent>
+            </Card>
+            <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Unidades Rotas</CardTitle>
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{unidadesRotas}</div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Gráficas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
