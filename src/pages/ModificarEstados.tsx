@@ -154,6 +154,47 @@ const ModificarEstados = () => {
       .reduce((sum, f) => sum + (Number(f.Unidades) || 0), 0);
   };
 
+  const getFechaFresado = (orderId: string): string => {
+    const fresadosOrden = fresados.filter(f => f['ID Orden'] === orderId);
+    if (fresadosOrden.length === 0) return '-';
+    
+    // Si hay múltiples fresados, mostrar la fecha más reciente
+    const fechas = fresadosOrden
+      .map(f => f.Fecha)
+      .filter(f => f)
+      .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime());
+    
+    return fechas[0] ? format(new Date(fechas[0]), 'dd/MM/yyyy') : '-';
+  };
+
+  const getDiscoFresado = (orderId: string): string => {
+    const fresadosOrden = fresados.filter(f => f['ID Orden'] === orderId);
+    if (fresadosOrden.length === 0) return '-';
+    
+    // Obtener discos únicos
+    const discos = [...new Set(fresadosOrden.map(f => f.Disco).filter(d => d))];
+    return discos.join(', ') || '-';
+  };
+
+  const getMaterialFresado = (orderId: string): string => {
+    const fresadosOrden = fresados.filter(f => f['ID Orden'] === orderId);
+    if (fresadosOrden.length === 0) return '-';
+    
+    // Función helper para obtener material del disco
+    const getMaterial = (disco?: string): string => {
+      if (!disco) return '';
+      const firstChar = disco.charAt(0).toUpperCase();
+      if (firstChar === 'Z') return 'Zirconia';
+      if (firstChar === 'P') return 'PMMA';
+      if (firstChar === 'W') return 'Cera';
+      return '';
+    };
+    
+    // Obtener materiales únicos
+    const materiales = [...new Set(fresadosOrden.map(f => getMaterial(f.Disco as string)).filter(m => m))];
+    return materiales.join(', ') || '-';
+  };
+
   const ordenesFresadas = filteredOrders.filter(order => isOrderFresado(order['ID Orden']));
   const ordenesNoFresadas = filteredOrders.filter(order => !isOrderFresado(order['ID Orden']));
 
@@ -668,6 +709,9 @@ const ModificarEstados = () => {
                       <th className="text-left p-3 font-semibold">Fecha de Registro</th>
                       <th className="text-left p-3 font-semibold">Nombre</th>
                       <th className="text-left p-3 font-semibold">Fresado</th>
+                      <th className="text-left p-3 font-semibold">Disco</th>
+                      <th className="text-left p-3 font-semibold">Material</th>
+                      <th className="text-left p-3 font-semibold">Fecha de Fresado</th>
                       <th className="text-left p-3 font-semibold">Piezas Dentales</th>
                       <th className="text-left p-3 font-semibold">Piezas Fresadas</th>
                     </tr>
@@ -678,6 +722,9 @@ const ModificarEstados = () => {
                       const isFresado = isOrderFresado(orderId);
                       const piezasFresadas = getPiezasFresadas(orderId);
                       const piezasDentales = parseInt(order['Piezas Dentales'] || '0');
+                      const disco = getDiscoFresado(orderId);
+                      const material = getMaterialFresado(orderId);
+                      const fechaFresado = getFechaFresado(orderId);
 
                       return (
                         <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
@@ -690,6 +737,9 @@ const ModificarEstados = () => {
                               {isFresado && <span className="text-green-400 text-sm">Fresado</span>}
                             </div>
                           </td>
+                          <td className="p-3">{disco}</td>
+                          <td className="p-3">{material}</td>
+                          <td className="p-3">{fechaFresado}</td>
                           <td className="p-3">{piezasDentales}</td>
                           <td className="p-3">
                             <span className={cn(
