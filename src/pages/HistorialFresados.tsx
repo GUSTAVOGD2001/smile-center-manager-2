@@ -27,11 +27,11 @@ interface FresadoRow {
   Dx?: string;
   Unidades?: string;
   'C.R'?: string;
-  'Rep x. unidad'?: string;
+  'rep x. unidad'?: boolean;
   'Motivo de la rep'?: string;
   'Codigo de fresado'?: string;
   Material?: string;
-  [key: string]: string | undefined;
+  [key: string]: string | boolean | undefined;
 }
 
 
@@ -554,7 +554,7 @@ const HistorialFresados = () => {
                         <TableCell>{row['C.R'] || '-'}</TableCell>
                         <TableCell>
                           <Checkbox
-                            checked={row['Rep x. unidad']?.toLowerCase() === 'true' || row['Rep x. unidad']?.toLowerCase() === 'yes'}
+                            checked={row['rep x. unidad'] === true}
                             disabled
                           />
                         </TableCell>
