@@ -74,7 +74,8 @@ const ModificarEstados = () => {
   const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
   const [aCuentaDialogOpen, setACuentaDialogOpen] = useState(false);
   const [selectedOrderForACuenta, setSelectedOrderForACuenta] = useState<OrderRow | null>(null);
-  const [filterFresadas, setFilterFresadas] = useState<'all' | 'fresadas' | 'noFresadas' | 'discrepancias'>('all');
+  const [showOnlyFresadas, setShowOnlyFresadas] = useState(false);
+  const [showDiscrepancias, setShowDiscrepancias] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -209,15 +210,23 @@ const ModificarEstados = () => {
   const filteredOrdersByFresado = filteredOrders.filter(order => {
     const orderId = order['ID Orden'];
     const isFresado = isOrderFresado(orderId);
+    const piezasFresadas = getPiezasFresadas(orderId);
+    const piezasDentales = parseInt(order['Piezas Dentales'] || '0');
+    const tieneDiscrepancia = piezasFresadas !== piezasDentales;
     
-    if (filterFresadas === 'fresadas') return isFresado;
-    if (filterFresadas === 'noFresadas') return !isFresado;
-    if (filterFresadas === 'discrepancias') {
-      const piezasFresadas = getPiezasFresadas(orderId);
-      const piezasDentales = parseInt(order['Piezas Dentales'] || '0');
-      return piezasFresadas !== piezasDentales;
-    }
-    return true; // 'all'
+    // Si ambos filtros están desactivados, mostrar todo
+    if (!showOnlyFresadas && !showDiscrepancias) return true;
+    
+    // Si solo está activo el filtro de fresadas
+    if (showOnlyFresadas && !showDiscrepancias) return isFresado;
+    
+    // Si solo está activo el filtro de discrepancias
+    if (!showOnlyFresadas && showDiscrepancias) return tieneDiscrepancia;
+    
+    // Si ambos están activos, aplicar ambas condiciones
+    if (showOnlyFresadas && showDiscrepancias) return isFresado && tieneDiscrepancia;
+    
+    return true;
   });
 
   const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
@@ -686,7 +695,8 @@ const ModificarEstados = () => {
                       setDateTo(undefined);
                       setSearchName('');
                       setSearchOrderId('');
-                      setFilterFresadas('all');
+                      setShowOnlyFresadas(false);
+                      setShowDiscrepancias(false);
                     }}
                   >
                     Limpiar Filtros
@@ -696,16 +706,16 @@ const ModificarEstados = () => {
                   <div className="flex items-center gap-2">
                     <Switch
                       id="fresadas-switch"
-                      checked={filterFresadas === 'fresadas'}
-                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'fresadas' : 'all')}
+                      checked={showOnlyFresadas}
+                      onCheckedChange={setShowOnlyFresadas}
                     />
                     <Label htmlFor="fresadas-switch" className="cursor-pointer">Solo Fresadas</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       id="discrepancias-switch"
-                      checked={filterFresadas === 'discrepancias'}
-                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'discrepancias' : 'all')}
+                      checked={showDiscrepancias}
+                      onCheckedChange={setShowDiscrepancias}
                     />
                     <Label htmlFor="discrepancias-switch" className="cursor-pointer">Discrepancias</Label>
                   </div>
