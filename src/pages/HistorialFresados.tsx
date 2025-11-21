@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown, CalendarIcon, Layers } from 'lucide-react';
+import { Check, ChevronsUpDown, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 interface FresadoRow {
   'ID Orden': string;
@@ -34,17 +34,9 @@ interface FresadoRow {
   [key: string]: string | undefined;
 }
 
-interface OrderRow {
-  'ID Orden': string;
-  Costo?: string;
-  'A Cuenta'?: string;
-  'Piezas Dentales'?: string;
-  [key: string]: string | undefined;
-}
 
 const HistorialFresados = () => {
   const [fresados, setFresados] = useState<FresadoRow[]>([]);
-  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterIdOrden, setFilterIdOrden] = useState('');
   const [filterDisco, setFilterDisco] = useState('');
@@ -64,7 +56,7 @@ const HistorialFresados = () => {
   }, []);
 
   const fetchData = async () => {
-    await Promise.all([fetchFresados(), fetchOrders()]);
+    await fetchFresados();
   };
 
   const fetchFresados = async () => {
@@ -76,16 +68,6 @@ const HistorialFresados = () => {
     } catch (error) {
       toast.error('Error al cargar el historial de fresados');
       console.error('Error fetching fresados:', error);
-    }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const response = await fetch('https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec?token=Tamarindo123456');
-      const data = await response.json();
-      setOrders(data.rows || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
     } finally {
       setIsLoading(false);
     }
@@ -112,15 +94,6 @@ const HistorialFresados = () => {
     return '-';
   };
 
-  const enrichFresadoWithOrderData = (fresado: FresadoRow): FresadoRow & { Costo?: string; 'A Cuenta'?: string; 'Piezas Dentales'?: string } => {
-    const order = orders.find(o => o['ID Orden'] === fresado['ID Orden']);
-    return {
-      ...fresado,
-      Costo: order?.Costo || '-',
-      'A Cuenta': order?.['A Cuenta'] || '-',
-      'Piezas Dentales': order?.['Piezas Dentales'] || '-',
-    };
-  };
 
   const getUniqueDiscos = () => {
     const discos = new Set<string>();
@@ -150,7 +123,7 @@ const HistorialFresados = () => {
     return Array.from(tipos).sort();
   };
 
-  const filteredFresados = fresados.map(enrichFresadoWithOrderData).filter((row) => {
+  const filteredFresados = fresados.filter((row) => {
     const matchIdOrden = filterIdOrden === '' || row['ID Orden']?.toLowerCase().includes(filterIdOrden.toLowerCase());
     const matchDisco = filterDisco === '' || row.Disco === filterDisco;
     const material = getMaterial(row.Disco);
@@ -169,38 +142,6 @@ const HistorialFresados = () => {
     return matchIdOrden && matchDisco && matchMaterial && matchTipoTrabajo && matchDate;
   });
 
-  const totalUnidades = filteredFresados.reduce((sum, row) => sum + (parseInt(row.Unidades || '0')), 0);
-
-  // Datos para gráfica de Unidades por Disco
-  const unidadesPorDisco = filteredFresados.reduce((acc, row) => {
-    if (!row.Fecha || !row.Disco) return acc;
-    const fecha = row.Fecha.substring(0, 10);
-    const disco = row.Disco;
-    const unidades = parseInt(row.Unidades || '0');
-    
-    const existing = acc.find(item => item.fecha === fecha && item.disco === disco);
-    if (existing) {
-      existing.unidades += unidades;
-    } else {
-      acc.push({ fecha, disco, unidades });
-    }
-    return acc;
-  }, [] as Array<{ fecha: string; disco: string; unidades: number }>);
-
-  // Agrupar por fecha para la gráfica
-  const unidadesPorFecha = filteredFresados.reduce((acc, row) => {
-    if (!row.Fecha) return acc;
-    const fecha = row.Fecha.substring(0, 10);
-    const unidades = parseInt(row.Unidades || '0');
-    
-    const existing = acc.find(item => item.fecha === fecha);
-    if (existing) {
-      existing.unidades += unidades;
-    } else {
-      acc.push({ fecha, unidades });
-    }
-    return acc;
-  }, [] as Array<{ fecha: string; unidades: number }>).sort((a, b) => a.fecha.localeCompare(b.fecha));
 
   // Datos para gráfica de queso de Tipo de Trabajo
   const tipoTrabajoData = filteredFresados.reduce((acc, row) => {
@@ -234,10 +175,6 @@ const HistorialFresados = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d'];
 
-  const ordenesNoFresadas = orders.filter(order => {
-    return !fresados.some(f => f['ID Orden'] === order['ID Orden']);
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -256,13 +193,7 @@ const HistorialFresados = () => {
         <p className="text-muted-foreground">Registro completo de fresados realizados</p>
       </div>
 
-      <Tabs defaultValue="fresados" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="fresados">Fresados ({filteredFresados.length})</TabsTrigger>
-          <TabsTrigger value="no-fresadas">Órdenes no fresadas ({ordenesNoFresadas.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="fresados" className="space-y-6">
+      <div className="space-y-6">
           {/* Filtros */}
           <Card className="glass-card border-[rgba(255,255,255,0.1)]">
             <CardHeader>
@@ -528,38 +459,8 @@ const HistorialFresados = () => {
             </CardContent>
           </Card>
 
-          {/* Tarjeta de Total Unidades */}
-          <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Unidades Fresadas</CardTitle>
-              <Layers className="h-5 w-5 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{totalUnidades}</div>
-            </CardContent>
-          </Card>
-
           {/* Gráficas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfica de Unidades por Fecha */}
-            <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-              <CardHeader>
-                <CardTitle>Unidades por Fecha</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={unidadesPorFecha}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="fecha" angle={-45} textAnchor="end" height={80} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="unidades" stroke="#8884d8" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
             {/* Gráfica de queso de Tipo de Trabajo */}
             <Card className="glass-card border-[rgba(255,255,255,0.1)]">
               <CardHeader>
@@ -634,11 +535,7 @@ const HistorialFresados = () => {
                       <TableHead>Disco</TableHead>
                       <TableHead>N. Fresadora</TableHead>
                       <TableHead>Dx</TableHead>
-                      <TableHead>Unidades</TableHead>
-                      <TableHead>Piezas Dentales</TableHead>
                       <TableHead>C.R</TableHead>
-                      <TableHead>Costo</TableHead>
-                      <TableHead>A Cuenta</TableHead>
                       <TableHead>Rep x. Unidad</TableHead>
                       <TableHead>Motivo de la Rep</TableHead>
                       <TableHead>Código de Fresado</TableHead>
@@ -654,11 +551,7 @@ const HistorialFresados = () => {
                         <TableCell>{row.Disco || '-'}</TableCell>
                         <TableCell>{row.FR || '-'}</TableCell>
                         <TableCell>{row.Dx || '-'}</TableCell>
-                        <TableCell>{row.Unidades || '-'}</TableCell>
-                        <TableCell>{row['Piezas Dentales'] || '-'}</TableCell>
                         <TableCell>{row['C.R'] || '-'}</TableCell>
-                        <TableCell>${row.Costo || '0'}</TableCell>
-                        <TableCell>${row['A Cuenta'] || '0'}</TableCell>
                         <TableCell>
                           <Checkbox
                             checked={row['Rep x. unidad']?.toLowerCase() === 'true' || row['Rep x. unidad']?.toLowerCase() === 'yes'}
@@ -674,40 +567,7 @@ const HistorialFresados = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="no-fresadas" className="space-y-6">
-          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-            <CardHeader>
-              <CardTitle>Órdenes no fresadas ({ordenesNoFresadas.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID Orden</TableHead>
-                      <TableHead>Costo</TableHead>
-                      <TableHead>A Cuenta</TableHead>
-                      <TableHead>Piezas Dentales</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ordenesNoFresadas.map((order, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{order['ID Orden']}</TableCell>
-                        <TableCell>${order.Costo || '0'}</TableCell>
-                        <TableCell>${order['A Cuenta'] || '0'}</TableCell>
-                        <TableCell>{order['Piezas Dentales'] || '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 };
