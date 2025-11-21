@@ -20,7 +20,7 @@ interface Event {
   is_important: boolean;
   is_recurring: boolean;
   recurring_day: number | null;
-  recurring_type?: 'none' | 'every_5_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months';
+  recurring_type?: 'none' | 'every_7_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months' | 'every_6_months' | 'every_year';
   recurring_dates?: string[]; // Multiple dates for the same event
   color?: 'green' | 'red' | 'yellow';
   notes: string | null;
@@ -46,7 +46,7 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
     is_important: false,
     is_recurring: false,
     recurring_day: 1,
-    recurring_type: 'monthly' as 'none' | 'every_5_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months',
+    recurring_type: 'monthly' as 'none' | 'every_7_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months' | 'every_6_months' | 'every_year',
     recurring_dates: [] as string[],
     color: undefined as 'green' | 'red' | 'yellow' | undefined,
     notes: '',
@@ -112,8 +112,8 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         
         switch (event.recurring_type) {
-          case 'every_5_days':
-            return diffDays >= 0 && diffDays % 5 === 0;
+          case 'every_7_days':
+            return diffDays >= 0 && diffDays % 7 === 0;
           case 'every_15_days':
             return diffDays >= 0 && diffDays % 15 === 0;
           case 'monthly':
@@ -124,6 +124,12 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
           case 'every_4_months':
             const monthDiff4 = (selectedYear - eventDate.getFullYear()) * 12 + month - eventDate.getMonth();
             return monthDiff4 >= 0 && monthDiff4 % 4 === 0 && event.recurring_day === day;
+          case 'every_6_months':
+            const monthDiff6 = (selectedYear - eventDate.getFullYear()) * 12 + month - eventDate.getMonth();
+            return monthDiff6 >= 0 && monthDiff6 % 6 === 0 && event.recurring_day === day;
+          case 'every_year':
+            const yearDiff = selectedYear - eventDate.getFullYear();
+            return yearDiff >= 0 && month === eventDate.getMonth() && event.recurring_day === day;
           default:
             return event.recurring_day === day;
         }
@@ -359,17 +365,19 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
                  <>
                    <div className="space-y-2">
                      <Label>Tipo de recurrencia</Label>
-                     <select 
-                       value={formData.recurring_type} 
-                       onChange={e => setFormData({...formData, recurring_type: e.target.value as any})}
-                       className="w-full p-2 rounded bg-secondary/50 border"
-                     >
-                       <option value="every_5_days">Cada 5 días</option>
-                       <option value="every_15_days">Cada 15 días</option>
-                       <option value="monthly">Cada mes</option>
-                       <option value="every_2_months">Cada 2 meses</option>
-                       <option value="every_4_months">Cada 4 meses</option>
-                     </select>
+                      <select 
+                        value={formData.recurring_type} 
+                        onChange={e => setFormData({...formData, recurring_type: e.target.value as any})}
+                        className="w-full p-2 rounded bg-secondary/50 border"
+                      >
+                        <option value="every_7_days">Cada 7 días</option>
+                        <option value="every_15_days">Cada 15 días</option>
+                        <option value="monthly">Cada mes</option>
+                        <option value="every_2_months">Cada 2 meses</option>
+                        <option value="every_4_months">Cada 4 meses</option>
+                        <option value="every_6_months">Cada 6 meses</option>
+                        <option value="every_year">Cada año</option>
+                      </select>
                    </div>
                    <div className="space-y-2">
                      <Label>Día del mes (1-31)</Label>
