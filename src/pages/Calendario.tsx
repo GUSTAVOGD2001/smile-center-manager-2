@@ -20,6 +20,9 @@ interface Event {
   is_important: boolean;
   is_recurring: boolean;
   recurring_day: number | null;
+  recurring_type?: 'none' | 'every_5_days' | 'monthly' | 'every_2_months' | 'every_4_months';
+  recurring_dates?: string[]; // Multiple dates for the same event
+  color?: 'green' | 'red' | 'yellow';
   notes: string | null;
 }
 
@@ -43,6 +46,9 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
     is_important: false,
     is_recurring: false,
     recurring_day: 1,
+    recurring_type: 'monthly' as 'none' | 'every_5_days' | 'monthly' | 'every_2_months' | 'every_4_months',
+    recurring_dates: [] as string[],
+    color: undefined as 'green' | 'red' | 'yellow' | undefined,
     notes: '',
   });
 
@@ -91,10 +97,63 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
 
   const getEventsForDay = (day: number, month: number) => {
     const dateStr = `${selectedYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const currentDate = new Date(selectedYear, month, day);
+    
     return events.filter(event => {
-      if (event.is_recurring) return event.recurring_day === day;
+      // Check multi-date events
+      if (event.recurring_dates && event.recurring_dates.length > 0) {
+        return event.recurring_dates.some(d => d === dateStr);
+      }
+      
+      // Check recurring events
+      if (event.is_recurring && event.recurring_type) {
+        const eventDate = new Date(event.date);
+        const diffTime = currentDate.getTime() - eventDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        switch (event.recurring_type) {
+          case 'every_5_days':
+            return diffDays >= 0 && diffDays % 5 === 0;
+          case 'monthly':
+            return event.recurring_day === day;
+          case 'every_2_months':
+            const monthDiff2 = (selectedYear - eventDate.getFullYear()) * 12 + month - eventDate.getMonth();
+            return monthDiff2 >= 0 && monthDiff2 % 2 === 0 && event.recurring_day === day;
+          case 'every_4_months':
+            const monthDiff4 = (selectedYear - eventDate.getFullYear()) * 12 + month - eventDate.getMonth();
+            return monthDiff4 >= 0 && monthDiff4 % 4 === 0 && event.recurring_day === day;
+          default:
+            return event.recurring_day === day;
+        }
+      }
+      
       return event.date === dateStr;
     });
+  };
+
+  const getUpcomingEvents = () => {
+    const today = new Date();
+    const upcoming: Array<Event & { displayDate: Date }> = [];
+    
+    // Check next 365 days
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() + i);
+      const day = checkDate.getDate();
+      const month = checkDate.getMonth();
+      const year = checkDate.getFullYear();
+      
+      const eventsOnDay = getEventsForDay(day, month);
+      eventsOnDay.forEach(event => {
+        if (upcoming.length < 5) {
+          upcoming.push({ ...event, displayDate: new Date(checkDate) });
+        }
+      });
+      
+      if (upcoming.length >= 5) break;
+    }
+    
+    return upcoming;
   };
 
   const handleDayClick = (day: number, month: number) => {
@@ -112,7 +171,17 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', date: '', is_important: false, is_recurring: false, recurring_day: 1, notes: '' });
+    setFormData({ 
+      title: '', 
+      date: '', 
+      is_important: false, 
+      is_recurring: false, 
+      recurring_day: 1, 
+      recurring_type: 'monthly',
+      recurring_dates: [],
+      color: undefined,
+      notes: '' 
+    });
     setEditingEventId(null);
   };
 
@@ -181,13 +250,19 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
       const dayEvents = getEventsForDay(day, monthIndex);
       const hasEv = dayEvents.length > 0;
       const isImp = dayEvents.some(e => e.is_important);
-      const isRec = dayEvents.some(e => e.is_recurring);
+      const isRec = dayEvents.some(e => e.is_recurring || (e.recurring_dates && e.recurring_dates.length > 0));
       
       let bgClass = 'bg-secondary hover:bg-secondary/80';
       if (hasEv) {
           if (isImp) bgClass = 'bg-destructive text-white hover:bg-destructive/90';
           else if (isRec) bgClass = 'bg-blue-600 text-white hover:bg-blue-700';
-          else bgClass = 'bg-green-600 text-white hover:bg-green-700';
+          else {
+            const eventColor = dayEvents[0]?.color;
+            if (eventColor === 'green') bgClass = 'bg-green-600 text-white hover:bg-green-700';
+            else if (eventColor === 'red') bgClass = 'bg-red-600 text-white hover:bg-red-700';
+            else if (eventColor === 'yellow') bgClass = 'bg-yellow-500 text-white hover:bg-yellow-600';
+            else bgClass = 'bg-green-600 text-white hover:bg-green-700';
+          }
       }
       
       days.push(
@@ -199,6 +274,8 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
     return days;
   };
 
+  const upcomingEvents = getUpcomingEvents();
+
   return (
     <div className="space-y-6 pb-10">
       <div className="flex justify-between items-center">
@@ -209,6 +286,37 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
             <Button variant="ghost" onClick={() => setSelectedYear(y => y + 1)}><ChevronRight /></Button>
          </div>
       </div>
+
+      {/* Próximos eventos */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Próximos 5 Eventos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {upcomingEvents.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No hay eventos próximos</p>
+            ) : (
+              upcomingEvents.map((event, idx) => (
+                <div key={idx} className="flex justify-between items-center p-2 border border-[rgba(255,255,255,0.1)] rounded bg-secondary/20">
+                  <div>
+                    <p className="font-semibold">{event.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {event.displayDate.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {event.color === 'green' && <div className="w-3 h-3 rounded-full bg-green-600" />}
+                    {event.color === 'red' && <div className="w-3 h-3 rounded-full bg-red-600" />}
+                    {event.color === 'yellow' && <div className="w-3 h-3 rounded-full bg-yellow-500" />}
+                    {event.is_important && <span className="text-destructive text-xs font-bold">IMPORTANTE</span>}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
       
       <div className="flex justify-end mb-4">
          <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="gap-2"><Plus size={18}/> Añadir Evento</Button>
@@ -242,20 +350,87 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
                
                <div className="flex items-center space-x-2 p-2 border rounded bg-secondary/20">
                  <Checkbox id="rec" checked={formData.is_recurring} onCheckedChange={(c) => setFormData({...formData, is_recurring: !!c})} />
-                 <Label htmlFor="rec">Evento recurrente (se repite cada mes)</Label>
+                 <Label htmlFor="rec">Evento recurrente</Label>
                </div>
 
                {formData.is_recurring ? (
-                 <div className="space-y-2">
-                   <Label>Día del mes (1-31)</Label>
-                   <Input type="number" min="1" max="31" value={formData.recurring_day} onChange={e => setFormData({...formData, recurring_day: parseInt(e.target.value)})} required className="bg-secondary/50"/>
-                 </div>
+                 <>
+                   <div className="space-y-2">
+                     <Label>Tipo de recurrencia</Label>
+                     <select 
+                       value={formData.recurring_type} 
+                       onChange={e => setFormData({...formData, recurring_type: e.target.value as any})}
+                       className="w-full p-2 rounded bg-secondary/50 border"
+                     >
+                       <option value="every_5_days">Cada 5 días</option>
+                       <option value="monthly">Cada mes</option>
+                       <option value="every_2_months">Cada 2 meses</option>
+                       <option value="every_4_months">Cada 4 meses</option>
+                     </select>
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Día del mes (1-31)</Label>
+                     <Input type="number" min="1" max="31" value={formData.recurring_day} onChange={e => setFormData({...formData, recurring_day: parseInt(e.target.value)})} required className="bg-secondary/50"/>
+                   </div>
+                 </>
                ) : (
-                 <div className="space-y-2">
-                   <Label>Fecha</Label>
-                   <Input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required className="bg-secondary/50"/>
-                 </div>
+                 <>
+                   <div className="space-y-2">
+                     <Label>Fecha principal</Label>
+                     <Input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required className="bg-secondary/50"/>
+                   </div>
+                   
+                   <div className="space-y-2">
+                     <Label>Fechas adicionales (opcional)</Label>
+                     <div className="space-y-2">
+                       {formData.recurring_dates.map((d, i) => (
+                         <div key={i} className="flex gap-2">
+                           <Input type="date" value={d} onChange={e => {
+                             const newDates = [...formData.recurring_dates];
+                             newDates[i] = e.target.value;
+                             setFormData({...formData, recurring_dates: newDates});
+                           }} className="bg-secondary/50"/>
+                           <Button type="button" size="icon" variant="ghost" onClick={() => {
+                             const newDates = formData.recurring_dates.filter((_, idx) => idx !== i);
+                             setFormData({...formData, recurring_dates: newDates});
+                           }}><Trash2 size={16}/></Button>
+                         </div>
+                       ))}
+                       <Button type="button" variant="outline" size="sm" onClick={() => {
+                         setFormData({...formData, recurring_dates: [...formData.recurring_dates, '']});
+                       }}>+ Añadir fecha</Button>
+                     </div>
+                   </div>
+                 </>
                )}
+
+               <div className="space-y-2">
+                 <Label>Color del evento</Label>
+                 <div className="flex gap-2">
+                   <button
+                     type="button"
+                     className={`w-10 h-10 rounded-full bg-green-600 border-2 ${formData.color === 'green' ? 'border-white' : 'border-transparent'}`}
+                     onClick={() => setFormData({...formData, color: 'green'})}
+                   />
+                   <button
+                     type="button"
+                     className={`w-10 h-10 rounded-full bg-red-600 border-2 ${formData.color === 'red' ? 'border-white' : 'border-transparent'}`}
+                     onClick={() => setFormData({...formData, color: 'red'})}
+                   />
+                   <button
+                     type="button"
+                     className={`w-10 h-10 rounded-full bg-yellow-500 border-2 ${formData.color === 'yellow' ? 'border-white' : 'border-transparent'}`}
+                     onClick={() => setFormData({...formData, color: 'yellow'})}
+                   />
+                   <button
+                     type="button"
+                     className={`w-10 h-10 rounded-full bg-secondary border-2 ${!formData.color ? 'border-white' : 'border-transparent'}`}
+                     onClick={() => setFormData({...formData, color: undefined})}
+                   >
+                     <span className="text-xs">Por defecto</span>
+                   </button>
+                 </div>
+               </div>
 
                <div className="flex items-center space-x-2 mt-2">
                  <Checkbox id="imp" checked={formData.is_important} onCheckedChange={(c) => setFormData({...formData, is_important: !!c})} />
@@ -279,18 +454,31 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
           <div className="space-y-3 mt-2">
              {selectedDayEvents.map(ev => (
                <div key={ev.id} className="flex justify-between items-center p-3 border border-[rgba(255,255,255,0.1)] rounded-lg bg-secondary/30">
-                  <div>
-                    <p className="font-bold">{ev.title}</p>
-                    <p className="text-xs text-muted-foreground flex gap-2">
-                        <span>{ev.id}</span>
-                        {ev.is_recurring && <span className="text-blue-400">(Recurrente)</span>}
-                    </p>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     {ev.color === 'green' && <div className="w-3 h-3 rounded-full bg-green-600" />}
+                     {ev.color === 'red' && <div className="w-3 h-3 rounded-full bg-red-600" />}
+                     {ev.color === 'yellow' && <div className="w-3 h-3 rounded-full bg-yellow-500" />}
+                     <div>
+                       <p className="font-bold">{ev.title}</p>
+                       <p className="text-xs text-muted-foreground flex gap-2">
+                           <span>{ev.id}</span>
+                           {ev.is_recurring && <span className="text-blue-400">(Recurrente)</span>}
+                           {ev.recurring_dates && ev.recurring_dates.length > 0 && <span className="text-purple-400">(Multi-fecha)</span>}
+                       </p>
+                     </div>
+                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => { 
+                     <Button size="icon" variant="ghost" onClick={() => { 
                         setFormData({ 
-                            title: ev.title, date: ev.date, is_important: ev.is_important, 
-                            is_recurring: ev.is_recurring, recurring_day: ev.recurring_day || 1, notes: ev.notes || '' 
+                            title: ev.title, 
+                            date: ev.date, 
+                            is_important: ev.is_important, 
+                            is_recurring: ev.is_recurring, 
+                            recurring_day: ev.recurring_day || 1,
+                            recurring_type: ev.recurring_type || 'monthly',
+                            recurring_dates: ev.recurring_dates || [],
+                            color: ev.color,
+                            notes: ev.notes || '' 
                         });
                         setEditingEventId(ev.id); setIsEventListOpen(false); setIsDialogOpen(true); 
                     }}><Pencil size={16}/></Button>
