@@ -72,6 +72,7 @@ const Ingresos = () => {
   const [metodosDePago, setMetodosDePago] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [metodoPagoFilter, setMetodoPagoFilter] = useState<string>('Todos');
+  const [motivoFilter, setMotivoFilter] = useState<string>('Todos');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
@@ -130,16 +131,22 @@ const Ingresos = () => {
     }
   };
 
+  // Extract unique motivos
+  const motivos = Array.from(new Set(ingresos.map(i => i.Motivo).filter(Boolean)));
+
   const filteredIngresos = ingresos.filter(i => {
     // Filter by payment method
     const matchesMetodo = metodoPagoFilter === 'Todos' || i['Metodo de Pago'] === metodoPagoFilter;
+    
+    // Filter by motivo
+    const matchesMotivo = motivoFilter === 'Todos' || i.Motivo === motivoFilter;
     
     // Filter by date range
     const ingresoDate = parseAnyDate(i.Fecha);
     const matchesDateFrom = !dateFrom || !ingresoDate || ingresoDate >= dateFrom;
     const matchesDateTo = !dateTo || !ingresoDate || ingresoDate <= dateTo;
     
-    return matchesMetodo && matchesDateFrom && matchesDateTo;
+    return matchesMetodo && matchesMotivo && matchesDateFrom && matchesDateTo;
   });
 
   const totalIngresos = filteredIngresos.reduce((sum, i) => sum + (parseFloat(String(i['Monto de Ingreso'])) || 0), 0);
@@ -349,7 +356,7 @@ const Ingresos = () => {
       {/* Filters */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
             <div className="flex items-center gap-4">
               <Label htmlFor="filter-metodo">Método de pago:</Label>
               <Select value={metodoPagoFilter} onValueChange={setMetodoPagoFilter}>
@@ -361,6 +368,23 @@ const Ingresos = () => {
                   {metodosDePago.map((metodo) => (
                     <SelectItem key={metodo} value={metodo}>
                       {metodo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Label htmlFor="filter-motivo">Motivo:</Label>
+              <Select value={motivoFilter} onValueChange={setMotivoFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos</SelectItem>
+                  {motivos.map((motivo) => (
+                    <SelectItem key={motivo} value={motivo}>
+                      {motivo}
                     </SelectItem>
                   ))}
                 </SelectContent>
