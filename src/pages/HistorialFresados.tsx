@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 interface FresadoRow {
   'ID Orden': string;
+  Fecha?: string;
   M?: string;
   I?: string;
   C?: string;
@@ -385,6 +386,7 @@ const HistorialFresados = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID Orden</TableHead>
+                      <TableHead>Fecha</TableHead>
                       <TableHead>Tipo de Trabajo</TableHead>
                       <TableHead>Material</TableHead>
                       <TableHead>Disco</TableHead>
@@ -404,6 +406,7 @@ const HistorialFresados = () => {
                     {filteredFresados.map((row, idx) => (
                       <TableRow key={idx}>
                         <TableCell>{row['ID Orden'] || '-'}</TableCell>
+                        <TableCell>{row.Fecha || '-'}</TableCell>
                         <TableCell>{getTipoTrabajo(row)}</TableCell>
                         <TableCell>{getMaterial(row.Disco)}</TableCell>
                         <TableCell>{row.Disco || '-'}</TableCell>
