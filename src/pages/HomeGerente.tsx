@@ -56,7 +56,7 @@ const ESTADOS = [
 
 const API_URL = 'https://script.google.com/macros/s/AKfycby0z-tq623Nxh9jTK7g9c5jXF8VQY_iqrL5IYs4J-7OGg3tUyfO7-5RZVFAtbh9KlhJMw/exec';
 const API_TOKEN = 'Tamarindo123456';
-const DENTOMEX_API_URL = 'https://script.google.com/macros/s/AKfycbzW11JNH99wnAqwib-dGJMvj0iqqgVxYVas6ed-UelYqzGbqBKWCS8FJm33J-tjUWeTaQ/exec';
+const DENTOMEX_API_URL = 'https://script.google.com/macros/s/AKfycbzW11JNH99wnAqwib-dGJMvj0iqqgVxYVas6ed-UelYqzGbqBKWCS8FJm33J-tjUWeTaQ/exec?action=read';
 
 function CeldaEstadoEditable({ orden, onChange }: { orden: OrderRow; onChange: (patch: OrderRow) => void }) {
   const [saving, setSaving] = useState(false);
