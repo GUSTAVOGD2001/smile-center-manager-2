@@ -198,6 +198,11 @@ const ModificarEstados = () => {
     return materiales.join(', ') || '-';
   };
 
+  const getUnidadesRotas = (orderId: string): boolean => {
+    const fresadosOrden = fresados.filter(f => f['ID Orden'] === orderId);
+    return fresadosOrden.some(f => f['rep x. unidad'] === true);
+  };
+
   const ordenesFresadas = filteredOrders.filter(order => isOrderFresado(order['ID Orden']));
   const ordenesNoFresadas = filteredOrders.filter(order => !isOrderFresado(order['ID Orden']));
 
@@ -745,6 +750,7 @@ const ModificarEstados = () => {
                       <th className="text-left p-3 font-semibold">Fecha de Fresado</th>
                       <th className="text-left p-3 font-semibold">Piezas Dentales</th>
                       <th className="text-left p-3 font-semibold">Piezas Fresadas</th>
+                      <th className="text-left p-3 font-semibold">Unidades rotas</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -780,6 +786,13 @@ const ModificarEstados = () => {
                             )}>
                               {piezasFresadas}
                             </span>
+                          </td>
+                          <td className="p-3">
+                            {getUnidadesRotas(orderId) ? (
+                              <span className="text-destructive font-semibold">Sí</span>
+                            ) : (
+                              <span className="text-muted-foreground">No</span>
+                            )}
                           </td>
                         </tr>
                       );
