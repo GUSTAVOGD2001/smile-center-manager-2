@@ -20,7 +20,7 @@ interface Event {
   is_important: boolean;
   is_recurring: boolean;
   recurring_day: number | null;
-  recurring_type?: 'none' | 'every_5_days' | 'monthly' | 'every_2_months' | 'every_4_months';
+  recurring_type?: 'none' | 'every_5_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months';
   recurring_dates?: string[]; // Multiple dates for the same event
   color?: 'green' | 'red' | 'yellow';
   notes: string | null;
@@ -46,7 +46,7 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
     is_important: false,
     is_recurring: false,
     recurring_day: 1,
-    recurring_type: 'monthly' as 'none' | 'every_5_days' | 'monthly' | 'every_2_months' | 'every_4_months',
+    recurring_type: 'monthly' as 'none' | 'every_5_days' | 'every_15_days' | 'monthly' | 'every_2_months' | 'every_4_months',
     recurring_dates: [] as string[],
     color: undefined as 'green' | 'red' | 'yellow' | undefined,
     notes: '',
@@ -114,6 +114,8 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
         switch (event.recurring_type) {
           case 'every_5_days':
             return diffDays >= 0 && diffDays % 5 === 0;
+          case 'every_15_days':
+            return diffDays >= 0 && diffDays % 15 === 0;
           case 'monthly':
             return event.recurring_day === day;
           case 'every_2_months':
@@ -363,6 +365,7 @@ const Calendario = ({ isGerente = false }: CalendarioProps) => {
                        className="w-full p-2 rounded bg-secondary/50 border"
                      >
                        <option value="every_5_days">Cada 5 días</option>
+                       <option value="every_15_days">Cada 15 días</option>
                        <option value="monthly">Cada mes</option>
                        <option value="every_2_months">Cada 2 meses</option>
                        <option value="every_4_months">Cada 4 meses</option>
