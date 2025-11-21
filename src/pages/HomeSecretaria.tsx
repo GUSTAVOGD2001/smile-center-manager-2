@@ -955,10 +955,11 @@ const HomeSecretaria = () => {
                     <Label>Dientes seleccionados</Label>
                     <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)] whitespace-pre-wrap font-mono text-sm">
                       {(() => {
-                        const dientes = selectedOrder['Dientes seleccionados']?.trim();
-                        if (!dientes) return 'No hay dientes seleccionados';
-                        // Limpiar formato: "(26,)" -> "26"
-                        const cleaned = dientes.replace(/[()]/g, '').replace(/,+$/, '');
+                        const dientes = selectedOrder['Dientes seleccionados'];
+                        console.log('Dientes seleccionados value:', dientes);
+                        if (!dientes || dientes.trim() === '') return 'No hay dientes seleccionados';
+                        // Limpiar formato: "(26,)" -> "26" o "47," -> "47"
+                        const cleaned = dientes.trim().replace(/[()]/g, '').replace(/,+$/, '').trim();
                         return cleaned || 'No hay dientes seleccionados';
                       })()}
                     </div>
