@@ -167,7 +167,19 @@ const HomeGerente = () => {
     try {
       const response = await fetch(DENTOMEX_API_URL);
       const data = await response.json();
-      const sourceRows = Array.isArray(data?.rows) ? (data.rows as OrderRow[]) : [];
+      console.log('📊 Dentomex API Response:', data);
+      console.log('📊 Data structure check - has rows?:', data?.rows);
+      console.log('📊 Is array directly?:', Array.isArray(data));
+      
+      // Try to handle both possible formats: {ok: true, rows: [...]} or just [...]
+      let sourceRows: OrderRow[] = [];
+      if (Array.isArray(data?.rows)) {
+        sourceRows = data.rows as OrderRow[];
+      } else if (Array.isArray(data)) {
+        sourceRows = data as OrderRow[];
+      }
+      
+      console.log('📊 Final sourceRows length:', sourceRows.length);
       setDentomexOrders(sourceRows);
     } catch (error) {
       toast.error('Error al cargar órdenes Dentomex');
