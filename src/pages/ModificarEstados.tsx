@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers, MoreVertical } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CalendarIcon, DollarSign, Wallet, FileText, Printer, Layers, MoreVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -19,6 +21,13 @@ interface OrderRow {
   Timestamp: string;
   Estado: string;
   [key: string]: string;
+}
+
+interface FresadoRow {
+  'ID Orden': string;
+  Fecha?: string;
+  Unidades?: number;
+  [key: string]: string | number | boolean | undefined;
 }
 
 const ESTADOS = [
@@ -48,6 +57,7 @@ const fmtFecha = (v?: string | number | Date) =>
 
 const ModificarEstados = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [fresados, setFresados] = useState<FresadoRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState<Date>(() => {
@@ -65,6 +75,7 @@ const ModificarEstados = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchFresados();
   }, []);
 
   useEffect(() => {
@@ -120,6 +131,31 @@ const ModificarEstados = () => {
       setIsLoading(false);
     }
   };
+
+  const fetchFresados = async () => {
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbxeNTiBOeTTuhMaPzZ9oMVQ3JlzeYEaCqjygo_0JpEIwdNd4bn3ZwhJXSvBTSzjwihIkA/exec');
+      const data = await response.json();
+      const rowsData = Array.isArray(data) ? data : (data.rows || []);
+      setFresados(rowsData);
+    } catch (error) {
+      toast.error('Error al cargar historial de fresados');
+      console.error(error);
+    }
+  };
+
+  const isOrderFresado = (orderId: string): boolean => {
+    return fresados.some(f => f['ID Orden'] === orderId);
+  };
+
+  const getPiezasFresadas = (orderId: string): number => {
+    return fresados
+      .filter(f => f['ID Orden'] === orderId)
+      .reduce((sum, f) => sum + (Number(f.Unidades) || 0), 0);
+  };
+
+  const ordenesFresadas = filteredOrders.filter(order => isOrderFresado(order['ID Orden']));
+  const ordenesNoFresadas = filteredOrders.filter(order => !isOrderFresado(order['ID Orden']));
 
   const updateEstado = async (order: OrderRow, nuevoEstado: string) => {
     const orderId = order['ID Orden'];
@@ -263,6 +299,14 @@ const ModificarEstados = () => {
         <h1 className="text-3xl font-bold mb-2">Modificar Estados</h1>
         <p className="text-muted-foreground">Actualiza el estado de las órdenes</p>
       </div>
+
+      <Tabs defaultValue="estados" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="estados">Gestión de Estados</TabsTrigger>
+          <TabsTrigger value="fresados">Estado de Fresados</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="estados" className="space-y-6 mt-6">
 
       {/* Filtros */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
@@ -496,6 +540,176 @@ const ModificarEstados = () => {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="fresados" className="space-y-6 mt-6">
+          {/* Filtros */}
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Buscar por nombre..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+                  />
+                  <Input
+                    placeholder="Buscar por número de orden (ej: ORD-0001)..."
+                    value={searchOrderId}
+                    onChange={(e) => setSearchOrderId(e.target.value)}
+                    className="bg-secondary/50 border-[rgba(255,255,255,0.1)]"
+                  />
+                </div>
+                <div className="flex gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[200px]">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !dateFrom && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateFrom ? format(dateFrom, "PPP") : <span>Fecha desde</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateFrom}
+                          onSelect={setDateFrom}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !dateTo && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateTo ? format(dateTo, "PPP") : <span>Fecha hasta</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateTo}
+                          onSelect={setDateTo}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const now = new Date();
+                      setDateFrom(new Date(now.getFullYear(), now.getMonth(), 1));
+                      setDateTo(undefined);
+                      setSearchName('');
+                      setSearchOrderId('');
+                    }}
+                  >
+                    Limpiar Filtros
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tarjetas de resumen */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Órdenes Fresadas</CardTitle>
+                <CheckCircle2 className="h-5 w-5 text-green-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{ordenesFresadas.length}</div>
+              </CardContent>
+            </Card>
+            <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Órdenes No Fresadas</CardTitle>
+                <XCircle className="h-5 w-5 text-red-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{ordenesNoFresadas.length}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tabla de estado de fresados */}
+          <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+            <CardHeader>
+              <CardTitle>Estado de Fresados de Órdenes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                      <th className="text-left p-3 font-semibold">ID Orden</th>
+                      <th className="text-left p-3 font-semibold">Fecha de Registro</th>
+                      <th className="text-left p-3 font-semibold">Nombre</th>
+                      <th className="text-left p-3 font-semibold">Fresado</th>
+                      <th className="text-left p-3 font-semibold">Piezas Dentales</th>
+                      <th className="text-left p-3 font-semibold">Piezas Fresadas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order, idx) => {
+                      const orderId = order['ID Orden'];
+                      const isFresado = isOrderFresado(orderId);
+                      const piezasFresadas = getPiezasFresadas(orderId);
+                      const piezasDentales = parseInt(order['Piezas Dentales'] || '0');
+
+                      return (
+                        <tr key={idx} className="border-b border-[rgba(255,255,255,0.05)] hover:bg-secondary/30">
+                          <td className="p-3">{orderId}</td>
+                          <td className="p-3">{fmtFecha(order.Timestamp)}</td>
+                          <td className="p-3">{order['Nombre']} {order['Apellido']}</td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <Checkbox checked={isFresado} disabled />
+                              {isFresado && <span className="text-green-400 text-sm">Fresado</span>}
+                            </div>
+                          </td>
+                          <td className="p-3">{piezasDentales}</td>
+                          <td className="p-3">
+                            <span className={cn(
+                              "font-semibold",
+                              piezasFresadas === piezasDentales ? "text-green-400" : 
+                              piezasFresadas > 0 ? "text-yellow-400" : "text-muted-foreground"
+                            )}>
+                              {piezasFresadas}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <PrintReceiptDialog
         orderId={selectedOrderIdForPrint}
