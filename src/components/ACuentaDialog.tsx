@@ -19,7 +19,7 @@ interface ACuentaDialogProps {
   onUpdateACuenta: (orderId: string, newValue: string) => Promise<void>;
 }
 
-const METODOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia', 'Cheque'];
+const METODOS_PAGO = ['Efectivo', 'Cuenta BBVA Lalo', 'Cuenta BBVA Karla', 'Cuenta MP Lalo'];
 
 export const ACuentaDialog = ({ 
   open, 
