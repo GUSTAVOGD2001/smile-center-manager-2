@@ -40,6 +40,7 @@ interface OrderRow {
   Puentes?: string;
   'Color Global'?: string;
   'Dientes seleccionados'?: string;
+  'Tipo de cliente'?: string;
   [key: string]: string | undefined;
 }
 
@@ -108,6 +109,7 @@ function mapOrdenResumenToOrderRow(item: OrdenResumen): OrderRow {
     ['Puentes', ['Puentes', 'puentes']],
     ['Color Global', ['Color Global', 'colorGlobal', 'color']],
     ['Dientes seleccionados', ['Dientes Seleccionados', 'Dientes seleccionados', 'dientesSeleccionados', 'dientes']],
+    ['Tipo de cliente', ['Tipo de cliente', 'tipoDeCliente', 'tipoCliente']],
   ];
 
   for (const [target, keys] of extraMappings) {
@@ -953,6 +955,12 @@ const HomeSecretaria = () => {
                     <Label>Dientes seleccionados</Label>
                     <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)] whitespace-pre-wrap font-mono text-sm">
                       {selectedOrder['Dientes seleccionados'] || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo de cliente</Label>
+                    <div className="p-3 bg-secondary/50 rounded-lg border border-[rgba(255,255,255,0.1)]">
+                      {selectedOrder['Tipo de cliente'] || 'N/A'}
                     </div>
                   </div>
                 </div>
