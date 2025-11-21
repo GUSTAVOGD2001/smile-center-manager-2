@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Eye, FileText } from 'lucide-react';
+import { Search, Eye, FileText, MoreVertical, Printer } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildReciboUrl } from '@/lib/urls';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
 
 interface OrderRow {
   'ID Orden': string;
@@ -112,6 +114,8 @@ const HomeUsuario = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -246,29 +250,40 @@ const HomeUsuario = () => {
                         <CeldaEstadoEditable orden={order} onChange={actualizarFila} />
                       </td>
                       <td className="p-3">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => showDetails(order)}
-                            className="gap-2"
-                          >
-                            <Eye size={16} />
-                            Ver Detalles
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
-                              window.open(receiptUrl, '_blank');
-                            }}
-                            className="gap-2"
-                          >
-                            <FileText size={16} />
-                            Ver Recibo
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-2">
+                              <MoreVertical size={16} />
+                              Opciones
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover border-[rgba(255,255,255,0.1)]">
+                            <DropdownMenuItem onClick={() => showDetails(order)} className="cursor-pointer">
+                              <Eye size={16} className="mr-2" />
+                              Ver
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                const receiptUrl = buildReciboUrl(order['ID Orden'], 'a4');
+                                window.open(receiptUrl, '_blank');
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <FileText size={16} className="mr-2" />
+                              Ver Recibo
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedOrderIdForPrint(order['ID Orden']);
+                                setPrintDialogOpen(true);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Printer size={16} className="mr-2" />
+                              Imprimir recibo
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}
@@ -359,6 +374,12 @@ const HomeUsuario = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <PrintReceiptDialog 
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        orderId={selectedOrderIdForPrint}
+      />
     </div>
   );
 };
