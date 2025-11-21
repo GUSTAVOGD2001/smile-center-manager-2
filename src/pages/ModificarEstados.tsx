@@ -74,7 +74,7 @@ const ModificarEstados = () => {
   const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
   const [aCuentaDialogOpen, setACuentaDialogOpen] = useState(false);
   const [selectedOrderForACuenta, setSelectedOrderForACuenta] = useState<OrderRow | null>(null);
-  const [filterFresadas, setFilterFresadas] = useState<'all' | 'fresadas' | 'noFresadas'>('all');
+  const [filterFresadas, setFilterFresadas] = useState<'all' | 'fresadas' | 'noFresadas' | 'discrepancias'>('all');
 
   useEffect(() => {
     fetchOrders();
@@ -212,6 +212,11 @@ const ModificarEstados = () => {
     
     if (filterFresadas === 'fresadas') return isFresado;
     if (filterFresadas === 'noFresadas') return !isFresado;
+    if (filterFresadas === 'discrepancias') {
+      const piezasFresadas = getPiezasFresadas(orderId);
+      const piezasDentales = parseInt(order['Piezas Dentales'] || '0');
+      return piezasFresadas !== piezasDentales;
+    }
     return true; // 'all'
   });
 
@@ -698,11 +703,11 @@ const ModificarEstados = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
-                      id="no-fresadas-switch"
-                      checked={filterFresadas === 'noFresadas'}
-                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'noFresadas' : 'all')}
+                      id="discrepancias-switch"
+                      checked={filterFresadas === 'discrepancias'}
+                      onCheckedChange={(checked) => setFilterFresadas(checked ? 'discrepancias' : 'all')}
                     />
-                    <Label htmlFor="no-fresadas-switch" className="cursor-pointer">Solo No Fresadas</Label>
+                    <Label htmlFor="discrepancias-switch" className="cursor-pointer">Discrepancias</Label>
                   </div>
                 </div>
               </div>
