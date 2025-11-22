@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X, Filter } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { formatDateDMY, parseAnyDate } from '@/utils/date';
 import { format } from 'date-fns';
@@ -66,7 +68,7 @@ const Finanzas = () => {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoriaFilter, setCategoriaFilter] = useState<string>('Todas');
+  const [categoriaFilter, setCategoriaFilter] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
@@ -123,15 +125,19 @@ const Finanzas = () => {
     }
   };
 
+  const toggleCategoria = (categoria: string) => {
+    setCategoriaFilter(prev =>
+      prev.includes(categoria)
+        ? prev.filter(c => c !== categoria)
+        : [...prev, categoria]
+    );
+  };
+
   const filteredGastos = gastos.filter(g => {
-    // Filter by category
-    const matchesCategoria = categoriaFilter === 'Todas' || g.Categoria === categoriaFilter;
-    
-    // Filter by date range
+    const matchesCategoria = categoriaFilter.length === 0 || categoriaFilter.includes(g.Categoria);
     const gastoDate = parseAnyDate(g.Fecha);
     const matchesDateFrom = !dateFrom || !gastoDate || gastoDate >= dateFrom;
     const matchesDateTo = !dateTo || !gastoDate || gastoDate <= dateTo;
-    
     return matchesCategoria && matchesDateFrom && matchesDateTo;
   });
 
@@ -258,163 +264,6 @@ const Finanzas = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gastos</CardTitle>
-            <DollarSign className="h-5 w-5 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredGastos.length} gastos registrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Gasto Promedio</CardTitle>
-            <TrendingUp className="h-5 w-5 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(gastoPromedio)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Por gasto
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
-            <Calendar className="h-5 w-5 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {gastosMesActual.length} gastos este mes
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chart */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Egresos por Día (Últimos 7 días)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="date" stroke="#888" />
-              <YAxis stroke="#888" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                }}
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-              />
-              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Filters */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="flex items-center gap-4">
-              <Label htmlFor="filter-categoria">Categoría:</Label>
-              <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Todas">Todas</SelectItem>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-4 flex-wrap">
-              <Label>Fecha:</Label>
-              
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[160px] justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Desde"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[160px] justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Hasta"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {(dateFrom || dateTo) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
-                  }}
-                  title="Limpiar filtros de fecha"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Gastos Table */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
