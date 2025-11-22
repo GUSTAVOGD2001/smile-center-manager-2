@@ -6,9 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X, Filter } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateDMY, parseAnyDate } from '@/utils/date';
 import { format } from 'date-fns';
@@ -73,7 +71,7 @@ const Ingresos = () => {
   const [ingresos, setIngresos] = useState<Ingreso[]>([]);
   const [metodosDePago, setMetodosDePago] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [metodoPagoFilter, setMetodoPagoFilter] = useState<string[]>([]);
+  const [metodoPagoFilter, setMetodoPagoFilter] = useState<string>('Todos');
   const [motivoFilter, setMotivoFilter] = useState<string>('Todos');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
@@ -136,17 +134,9 @@ const Ingresos = () => {
   // Extract unique motivos
   const motivos = Array.from(new Set(ingresos.map(i => i.Motivo).filter(Boolean)));
 
-  const toggleMetodoPago = (metodo: string) => {
-    setMetodoPagoFilter(prev =>
-      prev.includes(metodo)
-        ? prev.filter(m => m !== metodo)
-        : [...prev, metodo]
-    );
-  };
-
   const filteredIngresos = ingresos.filter(i => {
     // Filter by payment method
-    const matchesMetodo = metodoPagoFilter.length === 0 || metodoPagoFilter.includes(i['Metodo de Pago']);
+    const matchesMetodo = metodoPagoFilter === 'Todos' || i['Metodo de Pago'] === metodoPagoFilter;
     
     // Filter by motivo
     const matchesMotivo = motivoFilter === 'Todos' || i.Motivo === motivoFilter;
@@ -221,73 +211,167 @@ const Ingresos = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-...
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="idOrden">ID ORDEN *</Label>
+                  <Input
+                    id="idOrden"
+                    type="text"
+                    placeholder="ORD-0001"
+                    value={formData.idOrden}
+                    onChange={(e) => setFormData({ ...formData, idOrden: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fecha">Fecha (opcional)</Label>
+                  <Input
+                    id="fecha"
+                    type="date"
+                    value={formData.fecha}
+                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="monto">Monto *</Label>
+                  <Input
+                    id="monto"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.monto}
+                    onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="metodoPago">Método de Pago *</Label>
+                  <Select
+                    value={formData.metodoPago}
+                    onValueChange={(value) => setFormData({ ...formData, metodoPago: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un método de pago" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cuenta BBVA Karla">Cuenta BBVA Karla</SelectItem>
+                      <SelectItem value="Efectivo">Efectivo</SelectItem>
+                      <SelectItem value="Cuenta BBVA Lalo">Cuenta BBVA Lalo</SelectItem>
+                      <SelectItem value="Cuenta MP Lalo">Cuenta MP Lalo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="motivo">Motivo *</Label>
+                  <Input
+                    id="motivo"
+                    type="text"
+                    placeholder="Descripción del ingreso"
+                    value={formData.motivo}
+                    onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full">
+                Guardar Ingreso
+              </Button>
             </form>
           </CardContent>
         </Card>
       )}
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Ingresos</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalIngresos)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredIngresos.length} ingresos registrados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Ingreso Promedio</CardTitle>
+            <TrendingUp className="h-5 w-5 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(ingresoPromedio)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Por ingreso
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
+            <Calendar className="h-5 w-5 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {ingresosMesActual.length} ingresos este mes
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Chart */}
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Ingresos por Día (Últimos 7 días)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+                formatter={(value: number) => `$${value.toFixed(2)}`}
+              />
+              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       {/* Filters */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-wrap">
-            <div className="flex flex-col gap-2 flex-1">
-              <Label>Método de pago:</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full md:w-[300px] justify-between">
-                    <span className="flex items-center gap-2">
-                      <Filter className="h-4 w-4" />
-                      {metodoPagoFilter.length === 0 ? 'Todos los métodos' : `${metodoPagoFilter.length} seleccionados`}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-semibold">Seleccionar métodos</Label>
-                      {metodoPagoFilter.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setMetodoPagoFilter([])}
-                          className="h-auto p-1 text-xs"
-                        >
-                          Limpiar
-                        </Button>
-                      )}
-                    </div>
-                    {metodosDePago.map((metodo) => (
-                      <div key={metodo} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`metodo-${metodo}`}
-                          checked={metodoPagoFilter.includes(metodo)}
-                          onCheckedChange={() => toggleMetodoPago(metodo)}
-                        />
-                        <label
-                          htmlFor={`metodo-${metodo}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          {metodo}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {metodoPagoFilter.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {metodoPagoFilter.map((metodo) => (
-                    <Badge key={metodo} variant="secondary" className="gap-1">
+            <div className="flex items-center gap-4">
+              <Label htmlFor="filter-metodo">Método de pago:</Label>
+              <Select value={metodoPagoFilter} onValueChange={setMetodoPagoFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos</SelectItem>
+                  {metodosDePago.map((metodo) => (
+                    <SelectItem key={metodo} value={metodo}>
                       {metodo}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => toggleMetodoPago(metodo)}
-                      />
-                    </Badge>
+                    </SelectItem>
                   ))}
-                </div>
-              )}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-4">
@@ -373,73 +457,6 @@ const Ingresos = () => {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Ingresos</CardTitle>
-            <DollarSign className="h-5 w-5 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalIngresos)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredIngresos.length} ingresos registrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Ingreso Promedio</CardTitle>
-            <TrendingUp className="h-5 w-5 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(ingresoPromedio)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Por ingreso
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
-            <Calendar className="h-5 w-5 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {ingresosMesActual.length} ingresos este mes
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chart */}
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Ingresos por Día (Últimos 7 días)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="date" stroke="#888" />
-              <YAxis stroke="#888" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                }}
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-              />
-              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
         </CardContent>
       </Card>
 
