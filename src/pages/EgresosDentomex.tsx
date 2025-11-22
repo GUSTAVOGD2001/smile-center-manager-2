@@ -262,11 +262,86 @@ const EgresosDentomex = () => {
         </Card>
       )}
 
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Filtrado</CardTitle>
+            <Filter className="h-5 w-5 text-orange-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredGastos.length} gastos filtrados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gastos</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(gastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0))}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {gastos.length} gastos totales
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Gasto Promedio</CardTitle>
+            <TrendingUp className="h-5 w-5 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(gastoPromedio)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Por gasto
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
+            <Calendar className="h-5 w-5 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {gastosMesActual.length} gastos este mes
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>Egresos por Día (Últimos 7 días)</CardTitle>
         </CardHeader>
         <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+                formatter={(value: number) => `$${value.toFixed(2)}`}
+              />
+              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex flex-col gap-2 flex-1">
               <Label>Categoría:</Label>
@@ -393,84 +468,6 @@ const EgresosDentomex = () => {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Filtrado</CardTitle>
-            <Filter className="h-5 w-5 text-orange-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {filteredGastos.length} gastos filtrados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gastos</CardTitle>
-            <DollarSign className="h-5 w-5 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(gastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0))}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {gastos.length} gastos totales
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Gasto Promedio</CardTitle>
-            <TrendingUp className="h-5 w-5 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(gastoPromedio)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Por gasto
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
-            <Calendar className="h-5 w-5 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {gastosMesActual.length} gastos este mes
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
-        <CardHeader>
-          <CardTitle>Egresos por Día (Últimos 7 días)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="date" stroke="#888" />
-              <YAxis stroke="#888" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                }}
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-              />
-              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
         </CardContent>
       </Card>
 
