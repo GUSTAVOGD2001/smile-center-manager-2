@@ -262,6 +262,215 @@ const EgresosDentomex = () => {
         </Card>
       )}
 
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Filtrado</CardTitle>
+            <Filter className="h-5 w-5 text-orange-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredGastos.length} gastos filtrados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gastos</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(gastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0))}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {gastos.length} gastos totales
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Gasto Promedio</CardTitle>
+            <TrendingUp className="h-5 w-5 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(gastoPromedio)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Por gasto
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Mes Actual</CardTitle>
+            <Calendar className="h-5 w-5 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalMesActual)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {gastosMesActual.length} gastos este mes
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardHeader>
+          <CardTitle>Egresos por Día (Últimos 7 días)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="date" stroke="#888" />
+              <YAxis stroke="#888" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                }}
+                formatter={(value: number) => `$${value.toFixed(2)}`}
+              />
+              <Line type="monotone" dataKey="monto" stroke="hsl(var(--primary))" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card className="glass-card border-[rgba(255,255,255,0.1)]">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex flex-col gap-2 flex-1">
+              <Label>Categoría:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-[300px] justify-between">
+                    <span className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      {categoriaFilter.length === 0 ? 'Todas las categorías' : `${categoriaFilter.length} seleccionadas`}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Seleccionar categorías</Label>
+                      {categoriaFilter.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCategoriaFilter([])}
+                          className="h-auto p-1 text-xs"
+                        >
+                          Limpiar
+                        </Button>
+                      )}
+                    </div>
+                    {categorias.map((cat) => (
+                      <div key={cat} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`cat-${cat}`}
+                          checked={categoriaFilter.includes(cat)}
+                          onCheckedChange={() => toggleCategoria(cat)}
+                        />
+                        <label
+                          htmlFor={`cat-${cat}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {cat}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {categoriaFilter.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {categoriaFilter.map((cat) => (
+                    <Badge key={cat} variant="secondary" className="gap-1">
+                      {cat}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => toggleCategoria(cat)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4 flex-wrap">
+              <Label>Fecha:</Label>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[160px] justify-start text-left font-normal",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Desde"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[160px] justify-start text-left font-normal",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "dd/MM/yyyy") : "Hasta"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setDateFrom(undefined);
+                    setDateTo(undefined);
+                  }}
+                  title="Limpiar filtros de fecha"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardHeader>
           <CardTitle>Lista de Gastos</CardTitle>
