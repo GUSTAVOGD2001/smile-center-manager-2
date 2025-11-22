@@ -329,6 +329,7 @@ const Finanzas = () => {
       {/* Filters */}
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">Filtros</h3>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex items-center gap-4">
               <Label htmlFor="filter-categoria">Categoría:</Label>
