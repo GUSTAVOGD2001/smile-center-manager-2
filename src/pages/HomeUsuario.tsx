@@ -7,11 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Eye, FileText, MoreVertical, Printer } from 'lucide-react';
+import { Search, Eye, FileText, MoreVertical, Printer, Calendar as CalendarIcon, Play } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { buildReciboUrl } from '@/lib/urls';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PrintReceiptDialog } from '@/components/PrintReceiptDialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { parseAnyDate } from '@/utils/date';
 
 interface OrderRow {
   'ID Orden': string;
@@ -116,6 +121,8 @@ const HomeUsuario = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [selectedOrderIdForPrint, setSelectedOrderIdForPrint] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchOrders();
@@ -168,9 +175,18 @@ const HomeUsuario = () => {
       formattedSearchTerm = `ORD-${orderNumber}`;
     }
 
-    const results = orders.filter(order =>
+    let results = orders.filter(order =>
       order['ID Orden']?.toLowerCase().includes(formattedSearchTerm.toLowerCase())
     );
+
+    // Apply date filters
+    results = results.filter(order => {
+      const orderDate = parseAnyDate(order.Timestamp);
+      const matchesDateFrom = !dateFrom || !orderDate || orderDate >= dateFrom;
+      const matchesDateTo = !dateTo || !orderDate || orderDate <= dateTo;
+      return matchesDateFrom && matchesDateTo;
+    });
+
     setSearchResults(results);
     setHasSearched(true);
     setSelectedOrder(null);
@@ -200,7 +216,7 @@ const HomeUsuario = () => {
         <CardHeader>
           <CardTitle>Buscar Orden por ID</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
@@ -215,6 +231,75 @@ const HomeUsuario = () => {
               <Search size={18} />
               Buscar
             </Button>
+          </div>
+
+          {/* Date Filters */}
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Label>Desde:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[200px] justify-start text-left font-normal bg-secondary/50 border-[rgba(255,255,255,0.1)]",
+                      !dateFrom && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, "PPP") : "Seleccionar fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label>Hasta:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[200px] justify-start text-left font-normal bg-secondary/50 border-[rgba(255,255,255,0.1)]",
+                      !dateTo && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, "PPP") : "Seleccionar fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {(dateFrom || dateTo) && (
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+                }}
+              >
+                Limpiar fechas
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -233,7 +318,8 @@ const HomeUsuario = () => {
                     <th className="text-left p-3 font-semibold">Timestamp</th>
                     <th className="text-left p-3 font-semibold">Estado Actual</th>
                     <th className="text-left p-3 font-semibold">Nuevo Estado</th>
-                    <th className="text-left p-3 font-semibold">Acciones</th>
+                    <th className="text-left p-3 font-semibold">Acción</th>
+                    <th className="text-left p-3 font-semibold">Opciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -248,6 +334,17 @@ const HomeUsuario = () => {
                       </td>
                       <td className="p-3">
                         <CeldaEstadoEditable orden={order} onChange={actualizarFila} />
+                      </td>
+                      <td className="p-3">
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={() => showDetails(order)}
+                        >
+                          <Play size={16} />
+                          Acción
+                        </Button>
                       </td>
                       <td className="p-3">
                         <DropdownMenu>
@@ -289,7 +386,7 @@ const HomeUsuario = () => {
                   ))}
                   {searchResults.length === 0 && (
                     <tr>
-                      <td className="p-6 text-center text-muted-foreground" colSpan={5}>
+                      <td className="p-6 text-center text-muted-foreground" colSpan={7}>
                         Sin resultados
                       </td>
                     </tr>
