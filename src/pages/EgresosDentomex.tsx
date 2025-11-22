@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X, Filter } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { formatDateDMY, parseAnyDate } from '@/utils/date';
 import { format } from 'date-fns';
@@ -66,7 +68,7 @@ const EgresosDentomex = () => {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoriaFilter, setCategoriaFilter] = useState<string>('Todas');
+  const [categoriaFilter, setCategoriaFilter] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
@@ -124,12 +126,20 @@ const EgresosDentomex = () => {
   };
 
   const filteredGastos = gastos.filter(g => {
-    const matchesCategoria = categoriaFilter === 'Todas' || g.Categoria === categoriaFilter;
+    const matchesCategoria = categoriaFilter.length === 0 || categoriaFilter.includes(g.Categoria);
     const gastoDate = parseAnyDate(g.Fecha);
     const matchesDateFrom = !dateFrom || !gastoDate || gastoDate >= dateFrom;
     const matchesDateTo = !dateTo || !gastoDate || gastoDate <= dateTo;
     return matchesCategoria && matchesDateFrom && matchesDateTo;
   });
+
+  const toggleCategoria = (categoria: string) => {
+    setCategoriaFilter(prev =>
+      prev.includes(categoria)
+        ? prev.filter(c => c !== categoria)
+        : [...prev, categoria]
+    );
+  };
 
   const totalGastos = filteredGastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0);
   const gastoPromedio = filteredGastos.length > 0 ? totalGastos / filteredGastos.length : 0;
@@ -252,16 +262,29 @@ const EgresosDentomex = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Filtrado</CardTitle>
+            <Filter className="h-5 w-5 text-orange-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredGastos.length} gastos filtrados
+            </p>
+          </CardContent>
+        </Card>
+
         <Card className="glass-card hover-lift border-[rgba(255,255,255,0.1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Gastos</CardTitle>
             <DollarSign className="h-5 w-5 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${formatCurrency(totalGastos)}</div>
+            <div className="text-3xl font-bold">${formatCurrency(gastos.reduce((sum, g) => sum + (parseFloat(String(g['Monto de Gasto'])) || 0), 0))}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {filteredGastos.length} gastos registrados
+              {gastos.length} gastos totales
             </p>
           </CardContent>
         </Card>
@@ -320,21 +343,63 @@ const EgresosDentomex = () => {
       <Card className="glass-card border-[rgba(255,255,255,0.1)]">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="flex items-center gap-4">
-              <Label htmlFor="filter-categoria">Categoría:</Label>
-              <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Todas">Todas</SelectItem>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+            <div className="flex flex-col gap-2 flex-1">
+              <Label>Categoría:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-[300px] justify-between">
+                    <span className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      {categoriaFilter.length === 0 ? 'Todas las categorías' : `${categoriaFilter.length} seleccionadas`}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Seleccionar categorías</Label>
+                      {categoriaFilter.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCategoriaFilter([])}
+                          className="h-auto p-1 text-xs"
+                        >
+                          Limpiar
+                        </Button>
+                      )}
+                    </div>
+                    {categorias.map((cat) => (
+                      <div key={cat} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`cat-${cat}`}
+                          checked={categoriaFilter.includes(cat)}
+                          onCheckedChange={() => toggleCategoria(cat)}
+                        />
+                        <label
+                          htmlFor={`cat-${cat}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {cat}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {categoriaFilter.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {categoriaFilter.map((cat) => (
+                    <Badge key={cat} variant="secondary" className="gap-1">
                       {cat}
-                    </SelectItem>
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => toggleCategoria(cat)}
+                      />
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
