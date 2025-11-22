@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { DollarSign, TrendingUp, Calendar, Plus, CalendarIcon, X } from 'lucide-react';
@@ -66,7 +67,7 @@ const Finanzas = () => {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoriaFilter, setCategoriaFilter] = useState<string>('Todas');
+  const [categoriaFilter, setCategoriaFilter] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
@@ -125,7 +126,7 @@ const Finanzas = () => {
 
   const filteredGastos = gastos.filter(g => {
     // Filter by category
-    const matchesCategoria = categoriaFilter === 'Todas' || g.Categoria === categoriaFilter;
+    const matchesCategoria = categoriaFilter.length === 0 || categoriaFilter.includes(g.Categoria);
     
     // Filter by date range
     const gastoDate = parseAnyDate(g.Fecha);
@@ -332,20 +333,44 @@ const Finanzas = () => {
           <h3 className="text-lg font-semibold mb-4">Filtros</h3>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
             <div className="flex items-center gap-4">
-              <Label htmlFor="filter-categoria">Categoría:</Label>
-              <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Todas">Todas</SelectItem>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Categoría:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[200px] justify-start text-left font-normal"
+                  >
+                    {categoriaFilter.length === 0
+                      ? "Todas"
+                      : `${categoriaFilter.length} seleccionada(s)`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-3" align="start">
+                  <div className="space-y-2">
+                    {categorias.map((cat) => (
+                      <div key={cat} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`cat-${cat}`}
+                          checked={categoriaFilter.includes(cat)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setCategoriaFilter([...categoriaFilter, cat]);
+                            } else {
+                              setCategoriaFilter(categoriaFilter.filter((c) => c !== cat));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`cat-${cat}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {cat}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
